@@ -320,7 +320,8 @@ export class ReplayEngine {
       throw new OutcomeSignal(await this.finish({ status: 'business_outcome', code: c.code, message, outputs: this.outputs, detectorId: detector.id, stepId: step.id }));
     }
     if (c.type === 'hard_failure') {
-      throw new OutcomeSignal(await this.fail(c.code, message, { stepId: step.id, observed: summarize(peek) }));
+      const expected = step.expect ? describeCheckpoint(step.expect, this.o.params) : step.action === 'assert' ? describeCheckpoint(step.checkpoint, this.o.params) : `step ${step.id} (${step.description}) to complete`;
+      throw new OutcomeSignal(await this.fail(c.code, message, { stepId: step.id, expected, observed: summarize(peek) }));
     }
     if (c.type === 'escalate') {
       const dialog = peek.dialogs.find((d) => !d.matchedRule);

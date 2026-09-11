@@ -33,7 +33,7 @@ Key decisions:
 - **Replay was built and tested before discovery**, against a hand-authored artifact and every fault, because
   replay is the production path.
 - **Claude Opus 5** with adaptive thinking and the server-side refusal fallback. The real run
-  (`evidence/discovery-20260911T024953Z-013b/`) took 8 model turns and produced
+  (`evidence/discovery-20260911T041205Z-7ff9/`) took 8 model turns and produced
   `capabilities/coreserv.member.read_balances.json`, which replays unchanged on both tenants.
 
 ## 2. Artifact schema

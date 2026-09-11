@@ -111,6 +111,8 @@ export async function discover(o: DiscoveryOptions): Promise<DiscoveryResult> {
     let finished: DiscoveryResult | undefined;
     for (const use of uses) {
       const input = use.input as Record<string, unknown>;
+      // A sensitive extracted value must be masked from the first line it could appear in, including this one.
+      if (use.name === 'extract' && input.sensitive && typeof input.value === 'string') o.redactor.addSensitiveValue(input.value);
       ev.log('tool.call', { tool: use.name, input: use.name === 'act' ? { ...input, secretValue: undefined } : input });
 
       if (use.name === 'finish') {
@@ -191,9 +193,10 @@ export async function discover(o: DiscoveryOptions): Promise<DiscoveryResult> {
           continue;
         }
         const parse = x.type === 'currency' ? 'currency' : x.type === 'number' ? 'number' : 'text';
+        if (x.sensitive) o.redactor.addSensitiveValue(x.value);
         recorder.recordExtract({ output: x.output, source, parse, type: x.type, description: x.description, sensitive: x.sensitive });
         steps++;
-        results.push({ type: 'tool_result', tool_use_id: use.id, content: `Recorded output ${x.output} = ${x.value}.` });
+        results.push({ type: 'tool_result', tool_use_id: use.id, content: `Recorded output ${x.output}${x.sensitive ? ' (sensitive; masked in evidence)' : ` = ${x.value}`}.` });
         continue;
       }
 

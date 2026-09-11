@@ -70,6 +70,11 @@
         "name": "phone",
         "pattern": "\\b\\d{3}-\\d{4}\\b",
         "replacement": "[phone]"
+      },
+      {
+        "name": "street-address",
+        "pattern": "\\b\\d{1,6} [A-Z][A-Za-z]+ (St|Ave|Rd|Blvd|Ln|Dr|Way|Ct)\\b[^,\\n]*(,[^\\n]{0,40})?",
+        "replacement": "[address]"
       }
     ],
     "secretNames": [

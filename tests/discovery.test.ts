@@ -121,6 +121,10 @@ describe('discovery loop (scripted model) -> artifact -> replay', () => {
     const typed = cap.steps.filter((s) => s.action === 'type');
     expect(typed.map((s) => s.action === 'type' && s.value.kind)).toEqual(['secret', 'secret', 'param']);
     expect(JSON.stringify(cap)).not.toContain('demo123');
+    // The sensitive output value never reaches the discovery evidence.
+    const { readFileSync: rf } = await import('node:fs');
+    expect(rf(evidence.logPath, 'utf8')).not.toContain('Harborview');
+    expect(rf(result.transcriptPath, 'utf8')).not.toContain('Harborview');
     expect(cap.steps.slice(0, 4).every((s) => s.tags.includes('auth'))).toBe(true);
     expect(cap.steps[4].tags).not.toContain('auth');
     // Param canonicalised in the derived checkpoint
