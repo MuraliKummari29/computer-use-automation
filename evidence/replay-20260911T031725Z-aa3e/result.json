@@ -1,0 +1,223 @@
+{
+  "runId": "replay-20260911T031725Z-aa3e",
+  "capabilityId": "coreserv.member.open_subaccount",
+  "capabilityVersion": "1.0.0",
+  "startedAt": "2026-09-11T03:17:25.524Z",
+  "finishedAt": "2026-09-11T03:17:31.068Z",
+  "durationMs": 5544,
+  "steps": [
+    {
+      "stepId": "open",
+      "action": "navigate",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 169,
+      "drift": false,
+      "recoveries": [],
+      "screenshot": "evidence/replay-20260911T031725Z-aa3e/step-01.png"
+    },
+    {
+      "stepId": "user",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 170,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260911T031725Z-aa3e/step-02.png"
+    },
+    {
+      "stepId": "pass",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 174,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260911T031725Z-aa3e/step-03.png"
+    },
+    {
+      "stepId": "signin",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 187,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260911T031725Z-aa3e/step-04.png"
+    },
+    {
+      "stepId": "member-number",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 158,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260911T031725Z-aa3e/step-05.png"
+    },
+    {
+      "stepId": "find",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 197,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260911T031725Z-aa3e/step-06.png"
+    },
+    {
+      "stepId": "open-form",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 177,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260911T031725Z-aa3e/step-07.png"
+    },
+    {
+      "stepId": "product",
+      "action": "select",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 3185,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260911T031725Z-aa3e/step-08.png"
+    },
+    {
+      "stepId": "nickname",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 162,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260911T031725Z-aa3e/step-09.png"
+    },
+    {
+      "stepId": "deposit",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 161,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260911T031725Z-aa3e/step-10.png"
+    },
+    {
+      "stepId": "continue",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 177,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260911T031725Z-aa3e/step-11.png"
+    },
+    {
+      "stepId": "commit",
+      "action": "click",
+      "status": "escalated",
+      "attempts": 2,
+      "durationMs": 224,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260911T031725Z-aa3e/step-12.png"
+    },
+    {
+      "stepId": "confirmation",
+      "action": "extract",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 15,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "labeled-value"
+      },
+      "screenshot": "evidence/replay-20260911T031725Z-aa3e/step-13.png"
+    },
+    {
+      "stepId": "share-id",
+      "action": "extract",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 13,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "labeled-value"
+      },
+      "screenshot": "evidence/replay-20260911T031725Z-aa3e/step-14.png"
+    }
+  ],
+  "interventions": [
+    {
+      "id": "replay-20260911T031725Z-aa3e-int1",
+      "requestedAt": "2026-09-11T03:17:30.795Z",
+      "stepId": "commit",
+      "reason": "irreversible action \"Confirm and Open\" requires approval",
+      "code": "IRREVERSIBLE_NEEDS_APPROVAL",
+      "screenshot": "evidence/replay-20260911T031725Z-aa3e/intervention-1.png",
+      "humanActions": [],
+      "resolvedAt": "2026-09-11T03:17:30.799Z",
+      "resolution": "approve",
+      "operator": "reviewer",
+      "notes": "scripted [secret] for evidence generation"
+    }
+  ],
+  "evidenceDir": "evidence/replay-20260911T031725Z-aa3e",
+  "status": "success",
+  "outputs": {
+    "confirmationNumber": "CFMTWDYAUC",
+    "newShareId": "S13"
+  }
+}

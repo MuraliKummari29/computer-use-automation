@@ -1,0 +1,79 @@
+{
+  "id": "coreserv-default",
+  "description": "Allowlist for the CoreServ back-office console. Read and servicing paths only; no admin, no bulk export.",
+  "allowedOrigins": [
+    "http://localhost:4310",
+    "http://localhost:4311",
+    "http://127.0.0.1:4310",
+    "http://127.0.0.1:4311"
+  ],
+  "allowedPaths": [
+    "^/$",
+    "^/frame/",
+    "^/app/login",
+    "^/app/logout",
+    "^/app/notice",
+    "^/app/search",
+    "^/app/member/\\d+(/.*)?$"
+  ],
+  "deniedPaths": [
+    "^/admin",
+    "^/export",
+    "^/fault/",
+    "^/reset$"
+  ],
+  "allowedActions": [
+    "navigate",
+    "click",
+    "type",
+    "select",
+    "press",
+    "extract",
+    "wait"
+  ],
+  "irreversible": {
+    "matchers": [
+      {
+        "kind": "control-name",
+        "pattern": "^(Confirm and Open|Confirm Block|Confirm|Delete|Close Account|Submit Transfer)$"
+      },
+      {
+        "kind": "url",
+        "pattern": "/commit$"
+      }
+    ],
+    "mode": "require-approval"
+  },
+  "discovery": {
+    "maxSteps": 30,
+    "maxDurationMs": 600000,
+    "allowIrreversible": false
+  },
+  "redaction": {
+    "patterns": [
+      {
+        "name": "ssn",
+        "pattern": "\\b\\d{3}-\\d{2}-\\d{4}\\b",
+        "replacement": "***-**-####"
+      },
+      {
+        "name": "ssn-masked-tail",
+        "pattern": "\\*\\*\\*-\\*\\*-\\d{4}",
+        "replacement": "***-**-####"
+      },
+      {
+        "name": "card-number",
+        "pattern": "\\b(?:\\d[ -]?){13,16}\\b",
+        "replacement": "[card]"
+      },
+      {
+        "name": "phone",
+        "pattern": "\\b\\d{3}-\\d{4}\\b",
+        "replacement": "[phone]"
+      }
+    ],
+    "secretNames": [
+      "CORESERV_PASSWORD"
+    ]
+  }
+}

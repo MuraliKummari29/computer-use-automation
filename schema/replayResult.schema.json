@@ -1,0 +1,770 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "runId": {
+          "type": "string"
+        },
+        "capabilityId": {
+          "type": "string"
+        },
+        "capabilityVersion": {
+          "type": "string"
+        },
+        "tenantId": {
+          "type": "string"
+        },
+        "startedAt": {
+          "type": "string"
+        },
+        "finishedAt": {
+          "type": "string"
+        },
+        "durationMs": {
+          "type": "number"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "stepId": {
+                "type": "string"
+              },
+              "action": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "ok",
+                  "recovered",
+                  "failed",
+                  "skipped",
+                  "escalated"
+                ]
+              },
+              "attempts": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "durationMs": {
+                "type": "number"
+              },
+              "resolvedBy": {
+                "type": "object",
+                "properties": {
+                  "index": {
+                    "type": "number"
+                  },
+                  "kind": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "index",
+                  "kind"
+                ],
+                "additionalProperties": false
+              },
+              "drift": {
+                "default": false,
+                "type": "boolean"
+              },
+              "recoveries": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "detectorId": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    },
+                    "action": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detectorId",
+                    "code",
+                    "action"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "screenshot": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "stepId",
+              "action",
+              "status",
+              "attempts",
+              "durationMs",
+              "drift",
+              "recoveries"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "interventions": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "requestedAt": {
+                "type": "string"
+              },
+              "resolvedAt": {
+                "type": "string"
+              },
+              "stepId": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string"
+              },
+              "screenshot": {
+                "type": "string"
+              },
+              "operator": {
+                "type": "string"
+              },
+              "resolution": {
+                "type": "string",
+                "enum": [
+                  "retry",
+                  "skip",
+                  "abort",
+                  "approve",
+                  "timeout"
+                ]
+              },
+              "notes": {
+                "type": "string"
+              },
+              "humanActions": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "at": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "click",
+                        "input",
+                        "navigate",
+                        "keypress",
+                        "note"
+                      ]
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "at",
+                    "kind",
+                    "detail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "id",
+              "requestedAt",
+              "stepId",
+              "reason",
+              "code",
+              "humanActions"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "evidenceDir": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "const": "success"
+        },
+        "outputs": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "runId",
+        "capabilityId",
+        "capabilityVersion",
+        "startedAt",
+        "finishedAt",
+        "durationMs",
+        "steps",
+        "interventions",
+        "evidenceDir",
+        "status",
+        "outputs"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "runId": {
+          "type": "string"
+        },
+        "capabilityId": {
+          "type": "string"
+        },
+        "capabilityVersion": {
+          "type": "string"
+        },
+        "tenantId": {
+          "type": "string"
+        },
+        "startedAt": {
+          "type": "string"
+        },
+        "finishedAt": {
+          "type": "string"
+        },
+        "durationMs": {
+          "type": "number"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "stepId": {
+                "type": "string"
+              },
+              "action": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "ok",
+                  "recovered",
+                  "failed",
+                  "skipped",
+                  "escalated"
+                ]
+              },
+              "attempts": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "durationMs": {
+                "type": "number"
+              },
+              "resolvedBy": {
+                "type": "object",
+                "properties": {
+                  "index": {
+                    "type": "number"
+                  },
+                  "kind": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "index",
+                  "kind"
+                ],
+                "additionalProperties": false
+              },
+              "drift": {
+                "default": false,
+                "type": "boolean"
+              },
+              "recoveries": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "detectorId": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    },
+                    "action": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detectorId",
+                    "code",
+                    "action"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "screenshot": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "stepId",
+              "action",
+              "status",
+              "attempts",
+              "durationMs",
+              "drift",
+              "recoveries"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "interventions": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "requestedAt": {
+                "type": "string"
+              },
+              "resolvedAt": {
+                "type": "string"
+              },
+              "stepId": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string"
+              },
+              "screenshot": {
+                "type": "string"
+              },
+              "operator": {
+                "type": "string"
+              },
+              "resolution": {
+                "type": "string",
+                "enum": [
+                  "retry",
+                  "skip",
+                  "abort",
+                  "approve",
+                  "timeout"
+                ]
+              },
+              "notes": {
+                "type": "string"
+              },
+              "humanActions": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "at": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "click",
+                        "input",
+                        "navigate",
+                        "keypress",
+                        "note"
+                      ]
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "at",
+                    "kind",
+                    "detail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "id",
+              "requestedAt",
+              "stepId",
+              "reason",
+              "code",
+              "humanActions"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "evidenceDir": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "const": "business_outcome"
+        },
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "outputs": {
+          "default": {},
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          }
+        },
+        "detectorId": {
+          "type": "string"
+        },
+        "stepId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "runId",
+        "capabilityId",
+        "capabilityVersion",
+        "startedAt",
+        "finishedAt",
+        "durationMs",
+        "steps",
+        "interventions",
+        "evidenceDir",
+        "status",
+        "code",
+        "message",
+        "outputs",
+        "detectorId",
+        "stepId"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "runId": {
+          "type": "string"
+        },
+        "capabilityId": {
+          "type": "string"
+        },
+        "capabilityVersion": {
+          "type": "string"
+        },
+        "tenantId": {
+          "type": "string"
+        },
+        "startedAt": {
+          "type": "string"
+        },
+        "finishedAt": {
+          "type": "string"
+        },
+        "durationMs": {
+          "type": "number"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "stepId": {
+                "type": "string"
+              },
+              "action": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "ok",
+                  "recovered",
+                  "failed",
+                  "skipped",
+                  "escalated"
+                ]
+              },
+              "attempts": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "durationMs": {
+                "type": "number"
+              },
+              "resolvedBy": {
+                "type": "object",
+                "properties": {
+                  "index": {
+                    "type": "number"
+                  },
+                  "kind": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "index",
+                  "kind"
+                ],
+                "additionalProperties": false
+              },
+              "drift": {
+                "default": false,
+                "type": "boolean"
+              },
+              "recoveries": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "detectorId": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    },
+                    "action": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detectorId",
+                    "code",
+                    "action"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "screenshot": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "stepId",
+              "action",
+              "status",
+              "attempts",
+              "durationMs",
+              "drift",
+              "recoveries"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "interventions": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "requestedAt": {
+                "type": "string"
+              },
+              "resolvedAt": {
+                "type": "string"
+              },
+              "stepId": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string"
+              },
+              "screenshot": {
+                "type": "string"
+              },
+              "operator": {
+                "type": "string"
+              },
+              "resolution": {
+                "type": "string",
+                "enum": [
+                  "retry",
+                  "skip",
+                  "abort",
+                  "approve",
+                  "timeout"
+                ]
+              },
+              "notes": {
+                "type": "string"
+              },
+              "humanActions": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "at": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "click",
+                        "input",
+                        "navigate",
+                        "keypress",
+                        "note"
+                      ]
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "at",
+                    "kind",
+                    "detail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "id",
+              "requestedAt",
+              "stepId",
+              "reason",
+              "code",
+              "humanActions"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "evidenceDir": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "const": "failure"
+        },
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "stepId": {
+          "type": "string"
+        },
+        "expected": {
+          "type": "string"
+        },
+        "observed": {
+          "type": "string"
+        },
+        "evidence": {
+          "type": "object",
+          "properties": {
+            "screenshot": {
+              "type": "string"
+            },
+            "trace": {
+              "type": "string"
+            },
+            "log": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "log"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "runId",
+        "capabilityId",
+        "capabilityVersion",
+        "startedAt",
+        "finishedAt",
+        "durationMs",
+        "steps",
+        "interventions",
+        "evidenceDir",
+        "status",
+        "code",
+        "message",
+        "evidence"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}

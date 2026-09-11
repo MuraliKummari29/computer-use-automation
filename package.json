@@ -1,0 +1,33 @@
+{
+  "name": "coreserv-automation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Computer-use automation system: LLM discovers a flow on a legacy core-banking console, records it as a typed capability, replays it deterministically.",
+  "scripts": {
+    "app": "tsx mock-app/server.ts",
+    "discover": "tsx src/cli.ts discover",
+    "replay": "tsx src/cli.ts replay",
+    "catalog": "tsx src/cli.ts catalog",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "evidence": "tsx scripts/make-evidence.ts",
+    "app:summit": "tsx mock-app/server.ts --tenant summit --port 4311"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.125.0",
+    "express": "^5.1.0",
+    "playwright": "^1.55.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
