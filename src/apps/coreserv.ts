@@ -12,7 +12,11 @@ import type { DialogRule } from '../surface/types.js';
 
 export interface AppProfile {
   id: string;
+  /** Profile version; bumped when detectors change. Recorded alongside the vendor build. */
+  version: string;
   vendor: string;
+  /** Vendor builds this profile has been validated against. A replay on another build is warned about. */
+  builds: string[];
   /** Evaluated in order after the capability's own detectors. First match wins. */
   detectors: Detector[];
   /** Native dialogs that are known and safe to answer automatically. Anything else escalates. */
@@ -23,7 +27,9 @@ export interface AppProfile {
 
 export const coreservProfile: AppProfile = {
   id: 'coreserv',
+  version: '1.1.0',
   vendor: 'CoreServ back-office console (mock legacy core)',
+  builds: ['CoreServ 7.2.14', 'CoreServ 7.3.02'],
   dialogRules: [],
   versionPattern: 'CoreServ \\d+\\.\\d+\\.\\d+',
   detectors: [

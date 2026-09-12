@@ -50,7 +50,7 @@ if (existsSync('.env')) {
   }
 }
 // Synthetic credentials for the mock console. Real deployments read these from a secret store.
-process.env.CORESERV_USER ??= 'operator';
+process.env.CORESERV_USER ??= 'tlr0421';
 process.env.CORESERV_PASSWORD ??= 'demo123';
 
 function usage() {

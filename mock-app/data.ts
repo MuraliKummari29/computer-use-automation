@@ -93,6 +93,6 @@ export const SUB_ACCOUNT_PRODUCTS = [
 
 /** Synthetic operator credentials. */
 export const OPERATORS: Record<string, { password: string; canBlockCards: boolean }> = {
-  operator: { password: 'demo123', canBlockCards: true },
+  tlr0421: { password: 'demo123', canBlockCards: true },
   teller2: { password: 'demo123', canBlockCards: false },
 };

@@ -9,30 +9,313 @@
     "whenToUse": "The member reports a lost or suspicious card and identity has been verified.",
     "notFor": "Permanent closure, reissue, or lifting a block."
   },
-  "app": { "vendor": "CoreServ", "profile": "coreserv", "surface": "web", "entryUrl": "http://localhost:4310/", "recordedOnTenant": "harbor", "versionObserved": "CoreServ 7.2.14" },
+  "app": {
+    "vendor": "CoreServ",
+    "profile": "coreserv",
+    "surface": "web",
+    "entryUrl": "http://localhost:4310/",
+    "recordedOnTenant": "harbor",
+    "versionObserved": "CoreServ 7.2.14"
+  },
   "params": [
-    { "name": "memberNumber", "type": "string", "description": "The institution's member number", "required": true, "sensitive": true, "pattern": "^\\d{4,10}$" }
+    {
+      "name": "memberNumber",
+      "type": "string",
+      "description": "The institution's member number",
+      "required": true,
+      "sensitive": true,
+      "pattern": "^\\d{4,10}$"
+    }
   ],
   "outputs": [
-    { "name": "confirmationMessage", "type": "string", "description": "The console's confirmation line, including the card's last four digits", "sensitive": true }
+    {
+      "name": "confirmationMessage",
+      "type": "string",
+      "description": "The console's confirmation line, including the card's last four digits",
+      "sensitive": true
+    }
   ],
   "steps": [
-    { "id": "open", "action": "navigate", "url": "{entryUrl}", "description": "Open the console", "tags": ["auth"], "risk": "read", "expect": { "allOf": [{ "kind": "title", "contains": "Operator Sign In" }], "timeoutMs": 8000 }, "timeoutMs": 8000 },
-    { "id": "user", "action": "type", "description": "Enter operator id", "tags": ["auth"], "risk": "reversible", "target": { "strategies": [{ "kind": "anchor", "anchorText": "Operator ID", "relation": "same-row", "controlRole": "textbox" }], "frame": "main" }, "value": { "kind": "secret", "name": "CORESERV_USER" }, "clear": true, "timeoutMs": 8000 },
-    { "id": "pass", "action": "type", "description": "Enter operator password", "tags": ["auth"], "risk": "reversible", "target": { "strategies": [{ "kind": "anchor", "anchorText": "Password", "relation": "same-row", "controlRole": "textbox" }], "frame": "main" }, "value": { "kind": "secret", "name": "CORESERV_PASSWORD" }, "clear": true, "timeoutMs": 8000 },
-    { "id": "signin", "action": "click", "description": "Sign in", "tags": ["auth"], "risk": "reversible", "target": { "strategies": [{ "kind": "role", "role": "button", "name": "Sign In", "exact": true }], "frame": "main" }, "expect": { "allOf": [{ "kind": "title", "contains": "Member Lookup" }], "timeoutMs": 8000 }, "timeoutMs": 8000 },
-    { "id": "member-number", "action": "type", "description": "Enter the member number", "tags": [], "risk": "reversible", "target": { "strategies": [{ "kind": "anchor", "anchorText": "Member Number", "relation": "same-row", "controlRole": "textbox" }], "frame": "main" }, "value": { "kind": "param", "name": "memberNumber" }, "clear": true, "timeoutMs": 8000 },
-    { "id": "find", "action": "click", "description": "Run the lookup", "tags": [], "risk": "read", "target": { "strategies": [{ "kind": "role", "role": "button", "name": "Find", "exact": true }], "frame": "main" }, "expect": { "allOf": [{ "kind": "title", "contains": "Member Summary - {memberNumber}" }], "timeoutMs": 8000 }, "timeoutMs": 8000 },
-    { "id": "cards", "action": "click", "description": "Open Card Services", "tags": [], "risk": "read", "target": { "strategies": [{ "kind": "role", "role": "button", "name": "Card Services", "exact": true }], "frame": "main" }, "expect": { "allOf": [{ "kind": "title", "contains": "Card Services - {memberNumber}" }], "timeoutMs": 8000 }, "timeoutMs": 8000 },
-    { "id": "block", "action": "click", "description": "Start a temporary block on the active card (opens the confirmation screen)", "tags": [], "risk": "reversible", "target": { "strategies": [{ "kind": "role", "role": "button", "name": "Place Temporary Block", "exact": true }], "frame": "main" }, "expect": { "allOf": [{ "kind": "title", "contains": "Confirm Card Block" }], "timeoutMs": 8000 }, "timeoutMs": 8000 },
-    { "id": "confirm", "action": "click", "description": "Confirm the block (irreversible from the member's point of view; approval-gated)", "tags": [], "risk": "irreversible", "target": { "strategies": [{ "kind": "role", "role": "button", "name": "Confirm Block", "exact": true }], "frame": "main" }, "expect": { "allOf": [{ "kind": "title", "contains": "Card Services - {memberNumber}" }, { "kind": "text", "contains": "Temporary block placed" }], "timeoutMs": 8000 }, "timeoutMs": 8000 },
-    { "id": "message", "action": "extract", "description": "Read the confirmation line", "tags": [], "risk": "read", "output": "confirmationMessage", "source": { "strategies": [{ "kind": "text", "text": "Temporary block placed", "exact": false }], "frame": "main" }, "parse": "text", "timeoutMs": 5000 }
+    {
+      "id": "open",
+      "action": "navigate",
+      "url": "{entryUrl}",
+      "description": "Open the console",
+      "tags": [
+        "auth"
+      ],
+      "risk": "read",
+      "expect": {
+        "allOf": [
+          {
+            "kind": "title",
+            "contains": "Operator Sign In"
+          }
+        ],
+        "timeoutMs": 8000
+      },
+      "timeoutMs": 8000
+    },
+    {
+      "id": "user",
+      "action": "type",
+      "description": "Enter operator id",
+      "tags": [
+        "auth"
+      ],
+      "risk": "reversible",
+      "target": {
+        "strategies": [
+          {
+            "kind": "anchor",
+            "anchorText": "Operator ID",
+            "relation": "same-row",
+            "controlRole": "textbox"
+          }
+        ],
+        "frame": "main"
+      },
+      "value": {
+        "kind": "secret",
+        "name": "CORESERV_USER"
+      },
+      "clear": true,
+      "timeoutMs": 8000
+    },
+    {
+      "id": "pass",
+      "action": "type",
+      "description": "Enter operator password",
+      "tags": [
+        "auth"
+      ],
+      "risk": "reversible",
+      "target": {
+        "strategies": [
+          {
+            "kind": "anchor",
+            "anchorText": "Password",
+            "relation": "same-row",
+            "controlRole": "textbox"
+          }
+        ],
+        "frame": "main"
+      },
+      "value": {
+        "kind": "secret",
+        "name": "CORESERV_PASSWORD"
+      },
+      "clear": true,
+      "timeoutMs": 8000
+    },
+    {
+      "id": "signin",
+      "action": "click",
+      "description": "Sign in",
+      "tags": [
+        "auth"
+      ],
+      "risk": "reversible",
+      "target": {
+        "strategies": [
+          {
+            "kind": "role",
+            "role": "button",
+            "name": "Sign In",
+            "exact": true
+          }
+        ],
+        "frame": "main"
+      },
+      "expect": {
+        "allOf": [
+          {
+            "kind": "title",
+            "contains": "Member Lookup"
+          }
+        ],
+        "timeoutMs": 8000
+      },
+      "timeoutMs": 8000
+    },
+    {
+      "id": "member-number",
+      "action": "type",
+      "description": "Enter the member number",
+      "tags": [],
+      "risk": "reversible",
+      "target": {
+        "strategies": [
+          {
+            "kind": "anchor",
+            "anchorText": "Member Number",
+            "relation": "same-row",
+            "controlRole": "textbox"
+          }
+        ],
+        "frame": "main"
+      },
+      "value": {
+        "kind": "param",
+        "name": "memberNumber"
+      },
+      "clear": true,
+      "timeoutMs": 8000
+    },
+    {
+      "id": "find",
+      "action": "click",
+      "description": "Run the lookup",
+      "tags": [],
+      "risk": "read",
+      "target": {
+        "strategies": [
+          {
+            "kind": "role",
+            "role": "button",
+            "name": "Find",
+            "exact": true
+          }
+        ],
+        "frame": "main"
+      },
+      "expect": {
+        "allOf": [
+          {
+            "kind": "title",
+            "contains": "Member Summary - {memberNumber}"
+          }
+        ],
+        "timeoutMs": 8000
+      },
+      "timeoutMs": 8000
+    },
+    {
+      "id": "cards",
+      "action": "click",
+      "description": "Open Card Services",
+      "tags": [],
+      "risk": "read",
+      "target": {
+        "strategies": [
+          {
+            "kind": "role",
+            "role": "button",
+            "name": "Card Services",
+            "exact": true
+          }
+        ],
+        "frame": "main"
+      },
+      "expect": {
+        "allOf": [
+          {
+            "kind": "title",
+            "contains": "Card Services - {memberNumber}"
+          }
+        ],
+        "timeoutMs": 8000
+      },
+      "timeoutMs": 8000
+    },
+    {
+      "id": "block",
+      "action": "click",
+      "description": "Start a temporary block on the active card (opens the confirmation screen)",
+      "tags": [],
+      "risk": "reversible",
+      "target": {
+        "strategies": [
+          {
+            "kind": "role",
+            "role": "button",
+            "name": "Place Temporary Block",
+            "exact": true
+          }
+        ],
+        "frame": "main"
+      },
+      "expect": {
+        "allOf": [
+          {
+            "kind": "title",
+            "contains": "Confirm Card Block"
+          }
+        ],
+        "timeoutMs": 8000
+      },
+      "timeoutMs": 8000
+    },
+    {
+      "id": "confirm",
+      "action": "click",
+      "description": "Confirm the block (irreversible from the member's point of view; approval-gated)",
+      "tags": [],
+      "risk": "irreversible",
+      "target": {
+        "strategies": [
+          {
+            "kind": "role",
+            "role": "button",
+            "name": "Confirm Block",
+            "exact": true
+          }
+        ],
+        "frame": "main"
+      },
+      "expect": {
+        "allOf": [
+          {
+            "kind": "title",
+            "contains": "Card Services - {memberNumber}"
+          },
+          {
+            "kind": "text",
+            "contains": "Temporary block placed"
+          }
+        ],
+        "timeoutMs": 8000
+      },
+      "timeoutMs": 8000
+    },
+    {
+      "id": "message",
+      "action": "extract",
+      "description": "Read the confirmation line",
+      "tags": [],
+      "risk": "read",
+      "output": "confirmationMessage",
+      "source": {
+        "strategies": [
+          {
+            "kind": "text",
+            "text": "Temporary block placed",
+            "exact": false
+          }
+        ],
+        "frame": "main"
+      },
+      "parse": "text",
+      "timeoutMs": 5000
+    }
   ],
-  "success": { "allOf": [{ "kind": "text", "contains": "Temporary block placed" }], "timeoutMs": 5000 },
+  "success": {
+    "allOf": [
+      {
+        "kind": "text",
+        "contains": "Temporary block placed"
+      }
+    ],
+    "timeoutMs": 5000
+  },
   "detectors": [],
-  "overrides": [
-    { "tenantId": "summit", "entryUrl": "http://localhost:4311/", "patchSteps": { "member-number": { "target": { "strategies": [{ "kind": "anchor", "anchorText": "Account #", "relation": "same-row", "controlRole": "textbox" }], "frame": "main" } } }, "insertSteps": [], "removeSteps": [], "extraDetectors": [] }
-  ],
-  "policy": { "maxRisk": "irreversible", "requiresApproval": true },
-  "provenance": { "recordedAt": "2026-09-11T00:00:00Z", "recordedBy": "manual", "notes": "Hand-authored. Exercises the permission-denied business outcome: operators without the CARD_BLOCK permission (or the permission_denied fault) get a Not Authorized page." }
+  "policy": {
+    "maxRisk": "irreversible",
+    "requiresApproval": true
+  },
+  "provenance": {
+    "recordedAt": "2026-09-11T00:00:00Z",
+    "recordedBy": "manual",
+    "notes": "Hand-authored. Exercises the permission-denied business outcome: operators without the CARD_BLOCK permission (or the permission_denied fault) get a Not Authorized page."
+  }
 }

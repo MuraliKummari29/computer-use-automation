@@ -37,6 +37,8 @@ export interface ReplayOptions {
   /** Override the entry URL (e.g. a different port for a second tenant). */
   entryUrl?: string;
   profile?: AppProfile;
+  /** Tenant specialisation, stored and versioned separately from the base artifact. */
+  override?: TenantOverride;
 }
 
 type Peek = { url: string; title: string; text: string; dialogs: DialogEvent[]; lastStatus?: number };
@@ -70,6 +72,9 @@ export class ReplayEngine {
   private approval?: ApprovalRecord;
   /** The step in flight, so a run that ends mid-step still reports it. */
   private current?: StepReport;
+  /** Non-fatal signals the caller should see: drift, ambiguity, version mismatch. */
+  private warnings: string[] = [];
+  private versionChecked = false;
   private restarts = 0;
   private startedAt = new Date();
   private steps: Step[] = [];
@@ -82,7 +87,12 @@ export class ReplayEngine {
     this.handoff = new Handoff(o.surface, o.operator, (e, d) => o.evidence.log(e, d));
     this.profile = o.profile ?? APP_PROFILES[o.capability.app.profile];
     if (!this.profile) throw new Error(`unknown app profile ${o.capability.app.profile}`);
-    const override = o.tenantId ? o.capability.overrides.find((t) => t.tenantId === o.tenantId) : undefined;
+    const override = o.override;
+    if (override) {
+      if (override.capabilityId !== o.capability.id) throw new Error(`override ${override.tenantId} is for ${override.capabilityId}, not ${o.capability.id}`);
+      if (override.baseVersion !== o.capability.version)
+        throw new Error(`override ${override.tenantId} was written against ${o.capability.id}@${override.baseVersion}; capability is @${o.capability.version}. Re-review the override.`);
+    }
     this.steps = applyOverride(o.capability.steps, override);
     this.detectors = [...(override?.extraDetectors ?? []), ...o.capability.detectors, ...this.profile.detectors];
     this.entryUrl = o.entryUrl ?? override?.entryUrl ?? o.capability.app.entryUrl;
@@ -189,12 +199,37 @@ export class ReplayEngine {
     this.reports = this.reports.filter((r) => r.stepId !== step.id).concat(report);
     this.current = undefined;
     ev.log('step.done', { stepId: step.id, status: report.status, attempts: report.attempts, resolvedBy: report.resolvedBy, drift: report.drift, durationMs: report.durationMs });
+    if (report.drift) this.warnings.push(`step ${step.id}: resolved by fallback strategy #${report.resolvedBy?.index} (${report.resolvedBy?.kind})`);
+    if (report.ambiguous) this.warnings.push(`step ${step.id}: locator matched ${report.ambiguous} controls`);
+    if (!this.versionChecked) await this.checkAppVersion();
+  }
+
+  /** Once per run, after the first screen: compare the vendor build on screen with what the artifact and profile know. */
+  private async checkAppVersion() {
+    this.versionChecked = true;
+    if (!this.profile.versionPattern) return;
+    const peek = await this.o.surface.peek();
+    const m = peek.text.match(new RegExp(this.profile.versionPattern));
+    if (!m) return;
+    const observed = m[0];
+    const recorded = this.o.capability.app.versionObserved;
+    if (recorded && recorded !== observed) {
+      this.warnings.push(`app build ${observed} differs from the build the capability was recorded on (${recorded})`);
+      this.o.evidence.warn('app.version_drift', { observed, recorded, note: 'replaying on a different vendor build; review results and consider a canary run' });
+    }
+    if (this.profile.builds.length && !this.profile.builds.includes(observed)) {
+      this.warnings.push(`app build ${observed} is not in profile ${this.profile.id}@${this.profile.version} known builds`);
+      this.o.evidence.warn('app.unknown_build', { observed, profile: `${this.profile.id}@${this.profile.version}`, known: this.profile.builds });
+    }
+    this.o.evidence.log('app.version', { observed, recorded, profile: `${this.profile.id}@${this.profile.version}` });
   }
 
   /** Execute the action of a step once. Returns ok | retry | skip; throws OutcomeSignal/RestartSignal. */
   private async perform(step: Step, report: StepReport): Promise<'ok' | 'retry' | 'skip'> {
     const surface = this.o.surface;
     const ev = this.o.evidence;
+    // Every re-entry after the action was sent goes through the gate: verify, never re-dispatch.
+    if (this.executedIrreversible.has(step.id)) return this.afterSendGate(step, report);
 
     // Resolve target (with wait) when the step has one.
     let resolvedName: string | undefined;
@@ -401,7 +436,7 @@ export class ReplayEngine {
     ev.warn('recover', { stepId: step.id, detectorId: detector.id, code: c.code, action: c.recovery.action, attempt: n });
     const rec = c.recovery;
     if (rec.action === 'wait') await this.o.surface.act({ type: 'wait', ms: rec.ms });
-    if (rec.action === 'click') await this.guardedAct({ type: 'click', target: { locator: rec.target } }, `recovery:${detector.id}`, nameOf(rec.target));
+    if (rec.action === 'click') await this.guardedAct({ type: 'click', target: { locator: rec.target } }, `recovery:${detector.id}`, nameOf(rec.target), 'reversible', step, report);
     if (rec.action === 'dialog') {
       /* dialog rules are applied by the surface before the next action */
     }
@@ -414,9 +449,17 @@ export class ReplayEngine {
   }
 
   /** Every action outside the main step path (recoveries, re-auth) still goes through the policy guard and the control token. */
-  private async guardedAct(action: ReturnType<ReplayEngine['toSurfaceAction']>, context: string, controlName?: string, declaredRisk?: Step['risk']) {
-    const verdict = this.guard.check(action, { currentUrl: (await this.o.surface.peek()).url, controlName, mode: 'replay', declaredRisk, approveIrreversible: false });
-    if (!verdict.allowed) throw new OutcomeSignal(await this.fail(FailureCodes.POLICY_BLOCKED, `${context}: ${verdict.reason}`, {}));
+  private async guardedAct(action: ReturnType<ReplayEngine['toSurfaceAction']>, context: string, controlName?: string, declaredRisk?: Step['risk'], step?: Step, report?: StepReport) {
+    const verdict = this.guard.check(action, { currentUrl: (await this.o.surface.peek()).url, controlName, mode: 'replay', declaredRisk, approveIrreversible: !!this.approval });
+    if (!verdict.allowed) {
+      // A recovery on a page the policy treats as irreversible (e.g. a notice shown on a /commit URL) is not
+      // something to decide automatically without an approval on the invocation: ask, don't fail and don't act.
+      if (verdict.code === 'IRREVERSIBLE_NEEDS_APPROVAL' && step && report) {
+        const rec = await this.escalate(step, report, 'IRREVERSIBLE_NEEDS_APPROVAL', `${context}: ${verdict.reason}`, { options: ['approve', 'abort'] });
+        if (rec.resolution !== 'approve') throw new OutcomeSignal(await this.fail(rec.resolution === 'timeout' ? FailureCodes.INTERVENTION_TIMEOUT : FailureCodes.INTERVENTION_ABORTED, `${context}: not approved`, { stepId: step.id }));
+        this.o.evidence.warn('policy.flagged', { stepId: step.id, note: `${context} approved by ${rec.operator}` });
+      } else throw new OutcomeSignal(await this.fail(FailureCodes.POLICY_BLOCKED, `${context}: ${verdict.reason}`, { stepId: step?.id }));
+    }
     if (!this.handoff.token.automationMayAct) throw new Error(`engine attempted to act (${context}) while control is "${this.handoff.token.current}"`);
     await this.o.surface.act(action);
   }
@@ -435,21 +478,53 @@ export class ReplayEngine {
       throw new OutcomeSignal(await this.fail(FailureCodes.RECOVERY_EXHAUSTED, `recovery step ${step.id} checkpoint failed`, { stepId: step.id }));
   }
 
+  /**
+   * The only code path for a step whose irreversible action has already been sent. It never dispatches the
+   * action again on its own: it re-verifies the checkpoint, lets detectors classify what is on screen, and
+   * otherwise asks a human what the app actually did. A single re-send is possible only when the operator
+   * answers "retry", which means "I verified it did not take effect".
+   */
+  private async afterSendGate(step: Step, report: StepReport): Promise<'ok' | 'retry' | 'skip'> {
+    const ev = this.o.evidence;
+    ev.warn('irreversible.gate', { stepId: step.id, note: 'action already sent; verifying instead of re-dispatching' });
+    if (step.expect && (await this.waitForCheckpoint(step.expect, step))) return 'ok';
+    const peek = await this.o.surface.peek();
+    const det = this.detect(peek, step);
+    if (det) {
+      const cont = await this.handleDetection(det, step, report, peek);
+      if (cont === 'skip') return 'skip';
+      if (step.expect && (await this.waitForCheckpoint(step.expect, step))) return 'ok';
+      return 'retry'; // re-enters perform -> gate again (bounded by recovery maxAttempts and the escalation cap)
+    }
+    const rec = await this.escalate(step, report, FailureCodes.IRREVERSIBLE_OUTCOME_UNKNOWN, `the irreversible action of step ${step.id} was sent but its result could not be verified; check the application before deciding`, {
+      expected: step.expect ? describeCheckpoint(step.expect, this.o.params) : undefined,
+      observed: `${summarize(peek)} | retry = verified it did NOT take effect, send it once more; skip = verified it DID take effect, continue; abort = stop`,
+      options: ['retry', 'skip', 'abort'],
+    });
+    if (rec.resolution === 'retry') {
+      this.executedIrreversible.delete(step.id);
+      ev.warn('irreversible.resend_authorised', { stepId: step.id, by: rec.operator, notes: rec.notes });
+      return 'retry';
+    }
+    if (rec.resolution === 'skip') return 'skip';
+    throw new OutcomeSignal(await this.fail(rec.resolution === 'timeout' ? FailureCodes.INTERVENTION_TIMEOUT : FailureCodes.INTERVENTION_ABORTED, `outcome of irreversible step ${step.id} unverified (${rec.resolution})`, { stepId: step.id, observed: summarize(peek) }));
+  }
+
   // ---------------- stuck -> human ----------------
   private async stuck(step: Step, report: StepReport, code: string, reason: string, detail: { expected?: string; observed?: string }): Promise<'ok' | 'retry' | 'skip'> {
-    const sent = this.executedIrreversible.has(step.id);
-    if (report.attempts < 2 && code !== FailureCodes.EXTRACT_FAILED && !sent) {
+    if (this.executedIrreversible.has(step.id)) {
+      this.o.evidence.warn('step.stuck_after_send', { stepId: step.id, code, reason });
+      return this.afterSendGate(step, report);
+    }
+    if (report.attempts < 2 && code !== FailureCodes.EXTRACT_FAILED) {
       this.o.evidence.warn('step.retry', { stepId: step.id, code, reason });
       await this.o.surface.act({ type: 'wait', ms: 500 });
       return 'retry';
     }
-    const rec = await this.escalate(step, report, sent ? FailureCodes.IRREVERSIBLE_OUTCOME_UNKNOWN : code, sent ? `${reason}; the irreversible action was already sent, verify its outcome in the app before deciding` : reason, {
-      ...detail,
-      options: ['retry', 'skip', 'abort'],
-    });
+    const rec = await this.escalate(step, report, code, reason, { ...detail, options: ['retry', 'skip', 'abort'] });
     if (rec.resolution === 'retry') return 'retry';
     if (rec.resolution === 'skip') return 'skip';
-    const finalCode = rec.resolution === 'timeout' ? (sent ? FailureCodes.IRREVERSIBLE_OUTCOME_UNKNOWN : code) : rec.resolution === 'abort' && this.handoff.available ? FailureCodes.INTERVENTION_ABORTED : code;
+    const finalCode = rec.resolution === 'timeout' ? code : rec.resolution === 'abort' && this.handoff.available ? FailureCodes.INTERVENTION_ABORTED : code;
     throw new OutcomeSignal(await this.fail(finalCode, reason, { stepId: step.id, ...detail }));
   }
 
@@ -605,6 +680,7 @@ export class ReplayEngine {
     }
     return {
       steps,
+      warnings: this.warnings,
       runId: this.o.evidence.runId,
       approval: this.approval,
       capabilityId: this.o.capability.id,

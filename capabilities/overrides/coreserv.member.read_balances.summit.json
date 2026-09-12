@@ -1,0 +1,39 @@
+{
+  "capabilityId": "coreserv.member.read_balances",
+  "baseVersion": "1.0.0",
+  "tenantId": "summit",
+  "status": "approved",
+  "description": "Summit Community Bank labels the lookup field 'Account #' and runs a newer console build (7.3.02). Its post-login compliance interstitial is handled by the shared app profile, so no extra step is needed.",
+  "entryUrl": "http://localhost:4311/",
+  "patchSteps": {
+    "type-5": {
+      "target": {
+        "strategies": [
+          {
+            "kind": "anchor",
+            "anchorText": "Account #",
+            "relation": "same-row",
+            "controlRole": "textbox"
+          },
+          {
+            "kind": "bbox",
+            "x": 463,
+            "y": 124,
+            "w": 128,
+            "h": 21,
+            "viewport": {
+              "w": 1280,
+              "h": 900
+            },
+            "expectRole": "textbox"
+          }
+        ],
+        "frame": "main",
+        "rationale": "Same control as the base step; only the visible label differs on this tenant."
+      }
+    }
+  },
+  "insertSteps": [],
+  "removeSteps": [],
+  "extraDetectors": []
+}

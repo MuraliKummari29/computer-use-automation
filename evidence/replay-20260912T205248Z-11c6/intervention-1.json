@@ -1,0 +1,61 @@
+{
+  "request": {
+    "id": "replay-20260912T205248Z-11c6-int1",
+    "runId": "replay-20260912T205248Z-11c6",
+    "capabilityId": "coreserv.member.open_subaccount",
+    "goal": "Look up a member, open a new sub-account (share) with an initial deposit from checking, and confirm it.",
+    "stepId": "commit",
+    "stepDescription": "Commit: creates the share and moves funds (irreversible; approval-gated)",
+    "code": "IRREVERSIBLE_OUTCOME_UNKNOWN",
+    "reason": "the irreversible action of step commit was sent but its result could not be verified; check the application before deciding",
+    "url": "http://localhost:4310/app/member/***0042/subaccount/confirm",
+    "screenshotPath": "evidence/replay-20260912T205248Z-11c6/intervention-1.png",
+    "expected": "{\"kind\":\"title\",\"contains\":\"Sub-Account Opened\"}",
+    "observed": "title=\"Loading http://localhost:4310/app/member/***0042/subaccount/commit\" url=http://localhost:4310/app/member/***0042/subaccount/confirm | retry = verified it did NOT take effect, send it once more; skip = verified it DID take effect, continue; abort = stop",
+    "options": [
+      "retry",
+      "skip",
+      "abort"
+    ],
+    "createdAt": "2026-09-12T20:53:10.759Z"
+  },
+  "record": {
+    "id": "replay-20260912T205248Z-11c6-int1",
+    "requestedAt": "2026-09-12T20:53:10.759Z",
+    "stepId": "commit",
+    "reason": "the irreversible action of step commit was sent but its result could not be verified; check the application before deciding",
+    "code": "IRREVERSIBLE_OUTCOME_UNKNOWN",
+    "screenshot": "evidence/replay-20260912T205248Z-11c6/intervention-1.png",
+    "humanActions": [],
+    "resolvedAt": "2026-09-12T20:53:10.766Z",
+    "resolution": "abort",
+    "operator": "reviewer",
+    "notes": "verified in app: share was created once (IRREVERSIBLE_OUTCOME_UNKNOWN)"
+  },
+  "control": [
+    {
+      "at": "2026-09-12T20:53:10.759Z",
+      "from": "automation",
+      "to": "intervention_requested",
+      "by": "engine"
+    },
+    {
+      "at": "2026-09-12T20:53:10.766Z",
+      "from": "intervention_requested",
+      "to": "human",
+      "by": "operator"
+    },
+    {
+      "at": "2026-09-12T20:53:10.766Z",
+      "from": "human",
+      "to": "resuming",
+      "by": "engine"
+    },
+    {
+      "at": "2026-09-12T20:53:10.766Z",
+      "from": "resuming",
+      "to": "automation",
+      "by": "engine"
+    }
+  ]
+}

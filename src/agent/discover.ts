@@ -83,7 +83,7 @@ export async function discover(o: DiscoveryOptions): Promise<DiscoveryResult> {
   for (let turn = 0; turn < maxSteps + 5; turn++) {
     if (Date.now() > deadline) return fail('discovery time budget exhausted');
     if (steps >= maxSteps) return fail(`max steps (${maxSteps}) reached without finishing`);
-    pruneImages(messages, 3);
+    pruneImages(messages); // batch prune: rewriting old turns invalidates the cache prefix, so do it rarely
 
     // Prompt caching: tools + system are a stable prefix; the growing conversation is cached up to the latest
     // user turn so each step only pays for the newest observation.
@@ -244,13 +244,15 @@ export async function discover(o: DiscoveryOptions): Promise<DiscoveryResult> {
                   ? { type: 'select' as const, target: { mark: a.mark! }, value }
                   : { type: 'press' as const, key: a.key ?? 'Enter', target: { mark: a.mark! } };
 
-        const verdict = guard.check(action, { currentUrl: before?.url ?? o.entryUrl, controlName: el?.name, mode: 'discovery' });
+        const verdict = guard.check(action, { currentUrl: before?.url ?? o.entryUrl, controlName: el?.name, controlRole: el?.role, mode: 'discovery' });
         if (!verdict.allowed) {
           ev.warn('policy.denied', { code: verdict.code, reason: verdict.reason, control: el?.name });
           if (verdict.code === 'IRREVERSIBLE_BLOCKED' && el && before) {
             recorder.recordClick(el, before, before, a.reason, 'irreversible', false);
             steps++;
             results.push({ type: 'tool_result', tool_use_id: use.id, content: `Policy: "${el.name}" is an irreversible action and was NOT executed during discovery. It has been recorded as an approval-gated step for replay. If the goal is reached at this screen, call finish.` });
+          } else if (verdict.code === 'UNKNOWN_SUBMIT_BLOCKED') {
+            results.push({ type: 'tool_result', tool_use_id: use.id, content: `Policy: ${verdict.reason}. Do not try to work around it. If the goal cannot be reached without it, call escalate with that reason.`, is_error: true });
           } else {
             results.push({ type: 'tool_result', tool_use_id: use.id, content: `Policy blocked this action: ${verdict.reason}`, is_error: true });
           }
@@ -318,8 +320,18 @@ function withCacheBreakpoint(messages: Anthropic.MessageParam[]): Anthropic.Mess
   return out;
 }
 
-/** Keep only the most recent N screenshots in the conversation to bound context growth. */
-function pruneImages(messages: Anthropic.MessageParam[], keep: number) {
+/**
+ * Bound context growth without churning the cache: screenshots are left in place until more than `max` are
+ * present, then all but the newest `keep` are replaced at once. The prefix therefore changes once every
+ * (max - keep) steps instead of every step.
+ */
+function pruneImages(messages: Anthropic.MessageParam[], max = 12, keep = 4) {
+  let total = 0;
+  for (const m of messages) {
+    if (m.role !== 'user' || !Array.isArray(m.content)) continue;
+    for (const b of m.content) if (b.type === 'tool_result' && Array.isArray(b.content)) total += b.content.filter((c) => c.type === 'image').length;
+  }
+  if (total <= max) return;
   let seen = 0;
   for (let i = messages.length - 1; i >= 0; i--) {
     const m = messages[i];

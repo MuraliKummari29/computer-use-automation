@@ -40,7 +40,8 @@ export class Recorder {
     const entries = Object.entries(this.ctx.params).sort((a, b) => b[1].length - a[1].length);
     for (const [k, v] of entries) {
       if (v.length < 3) continue;
-      const re = new RegExp(`(?<![A-Za-z0-9_-])${v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z0-9_-])`, 'g');
+      // Not inside a word/token, not a currency amount ($100), not part of a decimal or thousands group (100.00, 1,100).
+      const re = new RegExp(`(?<![A-Za-z0-9_$-])(?<!\\d[.,])${v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z0-9_-])(?![.,]\\d)`, 'g');
       out = out.replace(re, `{${k}}`);
     }
     return out;
@@ -173,12 +174,11 @@ export class Recorder {
   }
 
   /**
-   * Tag the sign-in sequence. The model may tag steps itself (tags: ["auth"], which also covers MFA or challenge
-   * pages); when it did not, fall back to the heuristic: everything up to and including the first click after the
-   * last secret was typed.
+   * Tag the sign-in sequence. The model tags steps itself (tags: ["auth"], which also covers MFA or challenge
+   * pages the heuristic cannot see); the heuristic is unioned in so the sequence always includes the initial
+   * navigation and the sign-in click: everything up to and including the first click after the last secret typed.
    */
   tagAuthSteps() {
-    if (this.steps.some((s) => s.tags.includes('auth'))) return;
     const lastSecret = this.steps.map((s, i) => (s.action === 'type' && s.value.kind === 'secret' ? i : -1)).filter((i) => i >= 0).pop();
     if (lastSecret === undefined) return;
     let end = lastSecret;
@@ -233,7 +233,6 @@ export class Recorder {
       steps: this.steps,
       success: { allOf: successConds.length ? successConds : [{ kind: 'url', pattern: '.*' }], timeoutMs: 5000 },
       detectors: [],
-      overrides: [],
       policy: { maxRisk, requiresApproval: maxRisk === 'irreversible' },
       provenance: {
         recordedAt: new Date().toISOString(),

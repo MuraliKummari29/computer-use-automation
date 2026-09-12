@@ -10,7 +10,7 @@ import { runReplay } from '../src/replay/run.js';
 import { ScriptedOperator } from '../src/handoff/operators.js';
 import { existsSync, readdirSync, writeFileSync } from 'node:fs';
 
-process.env.CORESERV_USER ??= 'operator';
+process.env.CORESERV_USER ??= 'tlr0421';
 process.env.CORESERV_PASSWORD ??= 'demo123';
 
 const READ = existsSync('capabilities/coreserv.member.read_balances.json') ? 'capabilities/coreserv.member.read_balances.json' : 'tests/fixtures/read_balances.json';

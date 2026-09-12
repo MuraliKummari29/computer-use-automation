@@ -1,11 +1,11 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { existsSync } from 'node:fs';
 import { ensureMockApp } from '../mock-app/server.js';
 import { runReplay } from '../src/replay/run.js';
 import { ScriptedOperator } from '../src/handoff/operators.js';
 import { PlaywrightSurface } from '../src/surface/playwright.js';
 
-process.env.CORESERV_USER = 'operator';
+process.env.CORESERV_USER = 'tlr0421';
 process.env.CORESERV_PASSWORD = 'demo123';
 
 const READ = 'tests/fixtures/read_balances.json';
@@ -60,11 +60,24 @@ describe('deterministic replay: read balances', () => {
     if (r.status === 'success') expect(r.outputs.savingsBalance).toBe(75000);
   });
   it('replays on a second tenant (different label + compliance interstitial) via overrides, not re-recording', async () => {
-    const r = await runReplay({ ...opts, capability: READ, params: { memberNumber: '10042' }, tenantId: 'summit' });
+    const r = await runReplay({ ...opts, capability: READ, params: { memberNumber: '10042' }, tenantId: 'summit', override: 'tests/fixtures/overrides/coreserv.member.read_balances.summit.json' });
     expect(r.status).toBe('success');
     if (r.status === 'success') expect(r.outputs.memberName).toBe('Dana Whitfield');
     // The compliance interstitial was handled by the shared app profile.
     expect(r.steps.some((s) => s.recoveries.some((x) => x.code === 'INTERSTITIAL_COMPLIANCE'))).toBe(true);
+  });
+  it('refuses a tenant override written against a different base version', async () => {
+    const { readFileSync } = await import('node:fs');
+    const ov = { ...JSON.parse(readFileSync('tests/fixtures/overrides/coreserv.member.read_balances.summit.json', 'utf8')), baseVersion: '0.9.0' };
+    await expect(runReplay({ ...opts, capability: READ, params: { memberNumber: '10042' }, tenantId: 'summit', override: ov })).rejects.toThrow(/written against/);
+  });
+  it('warns, without failing, when the vendor build differs from the recording', async () => {
+    const { readFileSync } = await import('node:fs');
+    const base = JSON.parse(readFileSync(READ, 'utf8'));
+    const cap = { ...base, app: { ...base.app, versionObserved: 'CoreServ 7.1.00' } };
+    const r = await runReplay({ ...opts, capability: cap, params: { memberNumber: '10001' } });
+    expect(r.status).toBe('success');
+    expect(r.warnings.some((w) => w.includes('differs from the build'))).toBe(true);
   });
   it('masks sensitive params in the evidence log', async () => {
     const r = await runReplay({ ...opts, capability: READ, params: { memberNumber: '10002' } });
@@ -78,6 +91,10 @@ describe('deterministic replay: read balances', () => {
 
 describe('deterministic replay: open sub-account (irreversible)', () => {
   const params = { memberNumber: '10001', product: 'CLUB', nickname: 'Vacation', initialDeposit: '50' };
+  // Write flows mutate the console's in-memory state; start each from the seed so share counts are exact.
+  beforeEach(async () => {
+    await fetch('http://localhost:4310/reset', { method: 'POST' });
+  });
 
   it('surfaces a validation rejection as a business outcome with the app message', async () => {
     const r = await runReplay({ ...opts, capability: OPEN, params: { ...params, initialDeposit: '5' }, approval: APPROVAL });
@@ -119,6 +136,25 @@ describe('deterministic replay: open sub-account (irreversible)', () => {
     const state = (await (await fetch('http://localhost:4310/debug/member/10042')).json()) as { shares: string[] };
     expect(state.shares.filter((id) => id !== 'S01' && id !== 'S05')).toHaveLength(1);
     expect(r.steps.find((s) => s.stepId === 'commit')!.attempts).toBe(1);
+  });
+  it('a recoverable interstitial after the commit is handled without re-sending the commit', async () => {
+    const r = await runReplay({ ...opts, capability: OPEN, params: { ...params, memberNumber: '10042', nickname: 'Notice' }, approval: APPROVAL, fault: 'notice_after_commit' });
+    expect(r.status).toBe('success');
+    const commit = r.steps.find((s) => s.stepId === 'commit')!;
+    expect(commit.status).toBe('recovered');
+    expect(commit.recoveries[0].code).toBe('INTERSTITIAL_SYSTEM_NOTICE');
+    const state = (await (await fetch('http://localhost:4310/debug/member/10042')).json()) as { shares: string[] };
+    expect(state.shares.filter((id) => id !== 'S01' && id !== 'S05')).toHaveLength(1);
+  });
+  it('an operator "retry" on an unverified commit authorises exactly one re-send; "skip" continues', async () => {
+    // slow_commit: the write lands, the checkpoint times out, the gate escalates. The scripted operator says
+    // "skip" (verified it took effect) and the run continues to the extraction steps once the page arrives.
+    const op = new ScriptedOperator((req) => (req.code === 'IRREVERSIBLE_OUTCOME_UNKNOWN' ? { resolution: 'skip', operator: 'kim', notes: 'share visible in core' } : { resolution: 'abort', operator: 'kim' }));
+    const r = await runReplay({ ...opts, capability: OPEN, params: { ...params, memberNumber: '10003', nickname: 'Skip' }, approval: APPROVAL, operator: op, fault: 'slow_commit' });
+    expect(op.requests[0].code).toBe('IRREVERSIBLE_OUTCOME_UNKNOWN');
+    expect(r.steps.find((s) => s.stepId === 'commit')).toMatchObject({ status: 'skipped', attempts: 1 });
+    const state = (await (await fetch('http://localhost:4310/debug/member/10003')).json()) as { shares: string[] };
+    expect(state.shares.filter((id) => !['S01', 'S05', 'S20'].includes(id))).toHaveLength(1);
   });
   it('records the approval decision in the result', async () => {
     const r = await runReplay({ ...opts, capability: OPEN, params: { ...params, memberNumber: '10003', nickname: 'Rec' }, approval: { approvedBy: 'jane', reason: 'member verified by phone' } });

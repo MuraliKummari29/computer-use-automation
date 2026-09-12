@@ -1,0 +1,205 @@
+{
+  "steps": [
+    {
+      "stepId": "open",
+      "action": "navigate",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 164,
+      "drift": false,
+      "recoveries": [],
+      "screenshot": "evidence/replay-20260912T205248Z-11c6/step-01.png"
+    },
+    {
+      "stepId": "user",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 170,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T205248Z-11c6/step-02.png"
+    },
+    {
+      "stepId": "pass",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 174,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T205248Z-11c6/step-03.png"
+    },
+    {
+      "stepId": "signin",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 186,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260912T205248Z-11c6/step-04.png"
+    },
+    {
+      "stepId": "member-number",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 159,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T205248Z-11c6/step-05.png"
+    },
+    {
+      "stepId": "find",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 179,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260912T205248Z-11c6/step-06.png"
+    },
+    {
+      "stepId": "open-form",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 172,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260912T205248Z-11c6/step-07.png"
+    },
+    {
+      "stepId": "product",
+      "action": "select",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 3183,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T205248Z-11c6/step-08.png"
+    },
+    {
+      "stepId": "nickname",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 161,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T205248Z-11c6/step-09.png"
+    },
+    {
+      "stepId": "deposit",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 159,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T205248Z-11c6/step-10.png"
+    },
+    {
+      "stepId": "continue",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 178,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260912T205248Z-11c6/step-11.png"
+    },
+    {
+      "stepId": "commit",
+      "action": "click",
+      "status": "escalated",
+      "attempts": 1,
+      "durationMs": 0,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      }
+    }
+  ],
+  "warnings": [],
+  "runId": "replay-20260912T205248Z-11c6",
+  "approval": {
+    "approvedBy": "evidence-script",
+    "reason": "synthetic member; evidence generation",
+    "at": "2026-09-12T20:52:48.746Z"
+  },
+  "capabilityId": "coreserv.member.open_subaccount",
+  "capabilityVersion": "1.0.0",
+  "startedAt": "2026-09-12T20:52:48.746Z",
+  "finishedAt": "2026-09-12T20:53:10.859Z",
+  "durationMs": 22113,
+  "interventions": [
+    {
+      "id": "replay-20260912T205248Z-11c6-int1",
+      "requestedAt": "2026-09-12T20:53:10.759Z",
+      "stepId": "commit",
+      "reason": "the irreversible action of step commit was sent but its result could not be verified; check the application before deciding",
+      "code": "IRREVERSIBLE_OUTCOME_UNKNOWN",
+      "screenshot": "evidence/replay-20260912T205248Z-11c6/intervention-1.png",
+      "humanActions": [],
+      "resolvedAt": "2026-09-12T20:53:10.766Z",
+      "resolution": "abort",
+      "operator": "reviewer",
+      "notes": "verified in app: share was created once (IRREVERSIBLE_OUTCOME_UNKNOWN)"
+    }
+  ],
+  "evidenceDir": "evidence/replay-20260912T205248Z-11c6",
+  "status": "failure",
+  "code": "INTERVENTION_ABORTED",
+  "message": "outcome of irreversible step commit unverified (abort)",
+  "stepId": "commit",
+  "observed": "title=\"Loading http://localhost:4310/app/member/***0042/subaccount/commit\" url=http://localhost:4310/app/member/***0042/subaccount/confirm",
+  "evidence": {
+    "screenshot": "evidence/replay-20260912T205248Z-11c6/failure.png",
+    "trace": "evidence/replay-20260912T205248Z-11c6/trace.zip",
+    "log": "evidence/replay-20260912T205248Z-11c6/run.jsonl"
+  }
+}

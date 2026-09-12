@@ -25,7 +25,7 @@ src/handoff/     Control token state machine, operator console (HTTP), scripted 
 src/policy/      Allowlist guard + redaction
 src/evidence/    Per-run evidence directories (jsonl log, screenshots, trace, result)
 policies/        coreserv.json: origins, paths, action types, irreversible matchers, redaction patterns
-capabilities/    Saved capabilities (the catalog)
+capabilities/    Saved capabilities (the catalog); capabilities/overrides/ holds per-tenant specialisations, pinned to a base version
 tests/           vitest: schema/guard/redaction units, replay integration incl. faults and handoff, offline discovery
 ```
 
@@ -39,7 +39,7 @@ npx playwright install chromium
 cp .env.example .env        # only needed for discovery; add ANTHROPIC_API_KEY
 ```
 
-The mock console uses synthetic operator credentials (`operator` / `demo123`) that the CLI reads from
+The mock console uses synthetic operator credentials (`tlr0421` / `demo123`) that the CLI reads from
 `CORESERV_USER` / `CORESERV_PASSWORD` and defaults if unset. They are never written to artifacts or logs.
 
 ## Run without live services
@@ -47,7 +47,7 @@ The mock console uses synthetic operator credentials (`operator` / `demo123`) th
 Everything except discovery works offline:
 
 ```bash
-npm test                 # ~6 min: 37 tests, headless Chromium against the mock app (ports 4310/4311); also runs in CI
+npm test                 # ~7 min: 42 tests, headless Chromium against the mock app (ports 4310/4311); also runs in CI
 npm run app              # start the target console at http://localhost:4310 (tenant "harbor")
 npm run app:summit       # a second tenant of the same product at http://localhost:4311
 ```
@@ -119,7 +119,12 @@ npm run replay -- --capability capabilities/coreserv.member.open_subaccount.json
 ```
 
 Capabilities with `status: draft` are refused by `replay` and `catalog` unless `--allow-draft` is passed; the
-review step is to read the artifact and flip the status.
+review step is to read the artifact and flip the status. Tenant overrides live in `capabilities/overrides/`, carry
+their own `status` and the base `version` they were reviewed against, and replay refuses a mismatch.
+
+During discovery the agent may only click buttons on the policy's known-safe list; any other submit button (a
+real core's "Post", "Save", "Process") is refused and the agent is told to escalate. Links and typing are not
+gated. Grow the list per vendor from escalations.
 
 Human-in-the-loop, for real: run headed with the operator console attached, then answer the request at
 http://localhost:4400 (take control, act in the browser window, hand back with retry/skip/approve/abort):
@@ -158,6 +163,7 @@ The mock console keeps its data in memory, so write flows change balances and ca
 | `confirm_dialog`    | sub-account form submit       | escalate `UNEXPECTED_DIALOG`        |
 | `app_error`         | sub-account commit (HTTP 500) | hard failure `APP_ERROR`            |
 | `slow_commit`       | sub-account commit (20 s)     | escalate `IRREVERSIBLE_OUTCOME_UNKNOWN`, never re-sent |
+| `notice_after_commit` | after sub-account commit    | recoverable: acknowledge, re-verify, commit not re-sent |
 
 ## Evidence
 

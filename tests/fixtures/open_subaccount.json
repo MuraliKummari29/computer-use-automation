@@ -9,38 +9,434 @@
     "whenToUse": "The member has asked to open a club, money market or secondary savings share and the request has been verified.",
     "notFor": "Closing shares, transfers, or loans."
   },
-  "app": { "vendor": "CoreServ", "profile": "coreserv", "surface": "web", "entryUrl": "http://localhost:4310/", "recordedOnTenant": "harbor", "versionObserved": "CoreServ 7.2.14" },
+  "app": {
+    "vendor": "CoreServ",
+    "profile": "coreserv",
+    "surface": "web",
+    "entryUrl": "http://localhost:4310/",
+    "recordedOnTenant": "harbor",
+    "versionObserved": "CoreServ 7.2.14"
+  },
   "params": [
-    { "name": "memberNumber", "type": "string", "description": "The institution's member number", "required": true, "sensitive": true, "pattern": "^\\d{4,10}$" },
-    { "name": "product", "type": "string", "description": "Product code: CLUB (Holiday Club, min $25), MM (Money Market, min $1000), SAV2 (Secondary Savings, min $5)", "required": true, "sensitive": false, "pattern": "^(CLUB|MM|SAV2)$", "example": "CLUB" },
-    { "name": "nickname", "type": "string", "description": "Display nickname for the new share", "required": true, "sensitive": false, "example": "Vacation Fund" },
-    { "name": "initialDeposit", "type": "string", "description": "Initial deposit amount in dollars, moved from S05 Checking", "required": true, "sensitive": false, "pattern": "^\\d+(\\.\\d{1,2})?$", "example": "50" }
+    {
+      "name": "memberNumber",
+      "type": "string",
+      "description": "The institution's member number",
+      "required": true,
+      "sensitive": true,
+      "pattern": "^\\d{4,10}$"
+    },
+    {
+      "name": "product",
+      "type": "string",
+      "description": "Product code: CLUB (Holiday Club, min $25), MM (Money Market, min $1000), SAV2 (Secondary Savings, min $5)",
+      "required": true,
+      "sensitive": false,
+      "pattern": "^(CLUB|MM|SAV2)$",
+      "example": "CLUB"
+    },
+    {
+      "name": "nickname",
+      "type": "string",
+      "description": "Display nickname for the new share",
+      "required": true,
+      "sensitive": false,
+      "example": "Vacation Fund"
+    },
+    {
+      "name": "initialDeposit",
+      "type": "string",
+      "description": "Initial deposit amount in dollars, moved from S05 Checking",
+      "required": true,
+      "sensitive": false,
+      "pattern": "^\\d+(\\.\\d{1,2})?$",
+      "example": "50"
+    }
   ],
   "outputs": [
-    { "name": "confirmationNumber", "type": "string", "description": "Confirmation number of the opened sub-account", "sensitive": false },
-    { "name": "newShareId", "type": "string", "description": "Share id assigned to the new sub-account", "sensitive": false }
+    {
+      "name": "confirmationNumber",
+      "type": "string",
+      "description": "Confirmation number of the opened sub-account",
+      "sensitive": false
+    },
+    {
+      "name": "newShareId",
+      "type": "string",
+      "description": "Share id assigned to the new sub-account",
+      "sensitive": false
+    }
   ],
   "steps": [
-    { "id": "open", "action": "navigate", "url": "{entryUrl}", "description": "Open the console", "tags": ["auth"], "risk": "read", "expect": { "allOf": [{ "kind": "title", "contains": "Operator Sign In" }], "timeoutMs": 8000 }, "timeoutMs": 8000 },
-    { "id": "user", "action": "type", "description": "Enter operator id", "tags": ["auth"], "risk": "reversible", "target": { "strategies": [{ "kind": "anchor", "anchorText": "Operator ID", "relation": "same-row", "controlRole": "textbox" }], "frame": "main" }, "value": { "kind": "secret", "name": "CORESERV_USER" }, "clear": true, "timeoutMs": 8000 },
-    { "id": "pass", "action": "type", "description": "Enter operator password", "tags": ["auth"], "risk": "reversible", "target": { "strategies": [{ "kind": "anchor", "anchorText": "Password", "relation": "same-row", "controlRole": "textbox" }], "frame": "main" }, "value": { "kind": "secret", "name": "CORESERV_PASSWORD" }, "clear": true, "timeoutMs": 8000 },
-    { "id": "signin", "action": "click", "description": "Sign in", "tags": ["auth"], "risk": "reversible", "target": { "strategies": [{ "kind": "role", "role": "button", "name": "Sign In", "exact": true }], "frame": "main" }, "expect": { "allOf": [{ "kind": "title", "contains": "Member Lookup" }], "timeoutMs": 8000 }, "timeoutMs": 8000 },
-    { "id": "member-number", "action": "type", "description": "Enter the member number", "tags": [], "risk": "reversible", "target": { "strategies": [{ "kind": "anchor", "anchorText": "Member Number", "relation": "same-row", "controlRole": "textbox" }], "frame": "main" }, "value": { "kind": "param", "name": "memberNumber" }, "clear": true, "timeoutMs": 8000 },
-    { "id": "find", "action": "click", "description": "Run the lookup", "tags": [], "risk": "read", "target": { "strategies": [{ "kind": "role", "role": "button", "name": "Find", "exact": true }], "frame": "main" }, "expect": { "allOf": [{ "kind": "title", "contains": "Member Summary - {memberNumber}" }], "timeoutMs": 8000 }, "timeoutMs": 8000 },
-    { "id": "open-form", "action": "click", "description": "Open the sub-account form", "tags": [], "risk": "read", "target": { "strategies": [{ "kind": "role", "role": "button", "name": "Open Sub-Account", "exact": true }], "frame": "main" }, "expect": { "allOf": [{ "kind": "title", "contains": "Open Sub-Account - {memberNumber}" }], "timeoutMs": 8000 }, "timeoutMs": 8000 },
-    { "id": "product", "action": "select", "description": "Choose the product", "tags": [], "risk": "reversible", "target": { "strategies": [{ "kind": "anchor", "anchorText": "Product", "relation": "same-row", "controlRole": "combobox" }], "frame": "main" }, "value": { "kind": "param", "name": "product" }, "timeoutMs": 8000 },
-    { "id": "nickname", "action": "type", "description": "Enter the nickname", "tags": [], "risk": "reversible", "target": { "strategies": [{ "kind": "anchor", "anchorText": "Nickname", "relation": "same-row", "controlRole": "textbox" }], "frame": "main" }, "value": { "kind": "param", "name": "nickname" }, "clear": true, "timeoutMs": 8000 },
-    { "id": "deposit", "action": "type", "description": "Enter the initial deposit", "tags": [], "risk": "reversible", "target": { "strategies": [{ "kind": "anchor", "anchorText": "Initial Deposit", "relation": "same-row", "controlRole": "textbox" }], "frame": "main" }, "value": { "kind": "param", "name": "initialDeposit" }, "clear": true, "timeoutMs": 8000 },
-    { "id": "continue", "action": "click", "description": "Continue to the review screen", "tags": [], "risk": "reversible", "target": { "strategies": [{ "kind": "role", "role": "button", "name": "Continue", "exact": true }], "frame": "main" }, "expect": { "allOf": [{ "kind": "title", "contains": "Confirm Sub-Account" }], "timeoutMs": 8000 }, "timeoutMs": 8000 },
-    { "id": "commit", "action": "click", "description": "Commit: creates the share and moves funds (irreversible; approval-gated)", "tags": [], "risk": "irreversible", "target": { "strategies": [{ "kind": "role", "role": "button", "name": "Confirm and Open", "exact": true }], "frame": "main" }, "expect": { "allOf": [{ "kind": "title", "contains": "Sub-Account Opened" }], "timeoutMs": 8000 }, "timeoutMs": 8000 },
-    { "id": "confirmation", "action": "extract", "description": "Read the confirmation number", "tags": [], "risk": "read", "output": "confirmationNumber", "source": { "strategies": [{ "kind": "labeled-value", "label": "Confirmation #" }], "frame": "main" }, "parse": "text", "timeoutMs": 5000 },
-    { "id": "share-id", "action": "extract", "description": "Read the new share id", "tags": [], "risk": "read", "output": "newShareId", "source": { "strategies": [{ "kind": "labeled-value", "label": "New Share ID" }], "frame": "main" }, "parse": "text", "timeoutMs": 5000 }
+    {
+      "id": "open",
+      "action": "navigate",
+      "url": "{entryUrl}",
+      "description": "Open the console",
+      "tags": [
+        "auth"
+      ],
+      "risk": "read",
+      "expect": {
+        "allOf": [
+          {
+            "kind": "title",
+            "contains": "Operator Sign In"
+          }
+        ],
+        "timeoutMs": 8000
+      },
+      "timeoutMs": 8000
+    },
+    {
+      "id": "user",
+      "action": "type",
+      "description": "Enter operator id",
+      "tags": [
+        "auth"
+      ],
+      "risk": "reversible",
+      "target": {
+        "strategies": [
+          {
+            "kind": "anchor",
+            "anchorText": "Operator ID",
+            "relation": "same-row",
+            "controlRole": "textbox"
+          }
+        ],
+        "frame": "main"
+      },
+      "value": {
+        "kind": "secret",
+        "name": "CORESERV_USER"
+      },
+      "clear": true,
+      "timeoutMs": 8000
+    },
+    {
+      "id": "pass",
+      "action": "type",
+      "description": "Enter operator password",
+      "tags": [
+        "auth"
+      ],
+      "risk": "reversible",
+      "target": {
+        "strategies": [
+          {
+            "kind": "anchor",
+            "anchorText": "Password",
+            "relation": "same-row",
+            "controlRole": "textbox"
+          }
+        ],
+        "frame": "main"
+      },
+      "value": {
+        "kind": "secret",
+        "name": "CORESERV_PASSWORD"
+      },
+      "clear": true,
+      "timeoutMs": 8000
+    },
+    {
+      "id": "signin",
+      "action": "click",
+      "description": "Sign in",
+      "tags": [
+        "auth"
+      ],
+      "risk": "reversible",
+      "target": {
+        "strategies": [
+          {
+            "kind": "role",
+            "role": "button",
+            "name": "Sign In",
+            "exact": true
+          }
+        ],
+        "frame": "main"
+      },
+      "expect": {
+        "allOf": [
+          {
+            "kind": "title",
+            "contains": "Member Lookup"
+          }
+        ],
+        "timeoutMs": 8000
+      },
+      "timeoutMs": 8000
+    },
+    {
+      "id": "member-number",
+      "action": "type",
+      "description": "Enter the member number",
+      "tags": [],
+      "risk": "reversible",
+      "target": {
+        "strategies": [
+          {
+            "kind": "anchor",
+            "anchorText": "Member Number",
+            "relation": "same-row",
+            "controlRole": "textbox"
+          }
+        ],
+        "frame": "main"
+      },
+      "value": {
+        "kind": "param",
+        "name": "memberNumber"
+      },
+      "clear": true,
+      "timeoutMs": 8000
+    },
+    {
+      "id": "find",
+      "action": "click",
+      "description": "Run the lookup",
+      "tags": [],
+      "risk": "read",
+      "target": {
+        "strategies": [
+          {
+            "kind": "role",
+            "role": "button",
+            "name": "Find",
+            "exact": true
+          }
+        ],
+        "frame": "main"
+      },
+      "expect": {
+        "allOf": [
+          {
+            "kind": "title",
+            "contains": "Member Summary - {memberNumber}"
+          }
+        ],
+        "timeoutMs": 8000
+      },
+      "timeoutMs": 8000
+    },
+    {
+      "id": "open-form",
+      "action": "click",
+      "description": "Open the sub-account form",
+      "tags": [],
+      "risk": "read",
+      "target": {
+        "strategies": [
+          {
+            "kind": "role",
+            "role": "button",
+            "name": "Open Sub-Account",
+            "exact": true
+          }
+        ],
+        "frame": "main"
+      },
+      "expect": {
+        "allOf": [
+          {
+            "kind": "title",
+            "contains": "Open Sub-Account - {memberNumber}"
+          }
+        ],
+        "timeoutMs": 8000
+      },
+      "timeoutMs": 8000
+    },
+    {
+      "id": "product",
+      "action": "select",
+      "description": "Choose the product",
+      "tags": [],
+      "risk": "reversible",
+      "target": {
+        "strategies": [
+          {
+            "kind": "anchor",
+            "anchorText": "Product",
+            "relation": "same-row",
+            "controlRole": "combobox"
+          }
+        ],
+        "frame": "main"
+      },
+      "value": {
+        "kind": "param",
+        "name": "product"
+      },
+      "timeoutMs": 8000
+    },
+    {
+      "id": "nickname",
+      "action": "type",
+      "description": "Enter the nickname",
+      "tags": [],
+      "risk": "reversible",
+      "target": {
+        "strategies": [
+          {
+            "kind": "anchor",
+            "anchorText": "Nickname",
+            "relation": "same-row",
+            "controlRole": "textbox"
+          }
+        ],
+        "frame": "main"
+      },
+      "value": {
+        "kind": "param",
+        "name": "nickname"
+      },
+      "clear": true,
+      "timeoutMs": 8000
+    },
+    {
+      "id": "deposit",
+      "action": "type",
+      "description": "Enter the initial deposit",
+      "tags": [],
+      "risk": "reversible",
+      "target": {
+        "strategies": [
+          {
+            "kind": "anchor",
+            "anchorText": "Initial Deposit",
+            "relation": "same-row",
+            "controlRole": "textbox"
+          }
+        ],
+        "frame": "main"
+      },
+      "value": {
+        "kind": "param",
+        "name": "initialDeposit"
+      },
+      "clear": true,
+      "timeoutMs": 8000
+    },
+    {
+      "id": "continue",
+      "action": "click",
+      "description": "Continue to the review screen",
+      "tags": [],
+      "risk": "reversible",
+      "target": {
+        "strategies": [
+          {
+            "kind": "role",
+            "role": "button",
+            "name": "Continue",
+            "exact": true
+          }
+        ],
+        "frame": "main"
+      },
+      "expect": {
+        "allOf": [
+          {
+            "kind": "title",
+            "contains": "Confirm Sub-Account"
+          }
+        ],
+        "timeoutMs": 8000
+      },
+      "timeoutMs": 8000
+    },
+    {
+      "id": "commit",
+      "action": "click",
+      "description": "Commit: creates the share and moves funds (irreversible; approval-gated)",
+      "tags": [],
+      "risk": "irreversible",
+      "target": {
+        "strategies": [
+          {
+            "kind": "role",
+            "role": "button",
+            "name": "Confirm and Open",
+            "exact": true
+          }
+        ],
+        "frame": "main"
+      },
+      "expect": {
+        "allOf": [
+          {
+            "kind": "title",
+            "contains": "Sub-Account Opened"
+          }
+        ],
+        "timeoutMs": 8000
+      },
+      "timeoutMs": 8000
+    },
+    {
+      "id": "confirmation",
+      "action": "extract",
+      "description": "Read the confirmation number",
+      "tags": [],
+      "risk": "read",
+      "output": "confirmationNumber",
+      "source": {
+        "strategies": [
+          {
+            "kind": "labeled-value",
+            "label": "Confirmation #"
+          }
+        ],
+        "frame": "main"
+      },
+      "parse": "text",
+      "timeoutMs": 5000
+    },
+    {
+      "id": "share-id",
+      "action": "extract",
+      "description": "Read the new share id",
+      "tags": [],
+      "risk": "read",
+      "output": "newShareId",
+      "source": {
+        "strategies": [
+          {
+            "kind": "labeled-value",
+            "label": "New Share ID"
+          }
+        ],
+        "frame": "main"
+      },
+      "parse": "text",
+      "timeoutMs": 5000
+    }
   ],
-  "success": { "allOf": [{ "kind": "title", "contains": "Sub-Account Opened" }, { "kind": "text", "contains": "opened successfully" }], "timeoutMs": 5000 },
+  "success": {
+    "allOf": [
+      {
+        "kind": "title",
+        "contains": "Sub-Account Opened"
+      },
+      {
+        "kind": "text",
+        "contains": "opened successfully"
+      }
+    ],
+    "timeoutMs": 5000
+  },
   "detectors": [],
-  "overrides": [
-    { "tenantId": "summit", "entryUrl": "http://localhost:4311/", "patchSteps": { "member-number": { "target": { "strategies": [{ "kind": "anchor", "anchorText": "Account #", "relation": "same-row", "controlRole": "textbox" }], "frame": "main" } } }, "insertSteps": [], "removeSteps": [], "extraDetectors": [] }
-  ],
-  "policy": { "maxRisk": "irreversible", "requiresApproval": true },
-  "provenance": { "recordedAt": "2026-09-10T00:00:00Z", "recordedBy": "manual", "notes": "Hand-authored: the commit step is irreversible and is never executed during discovery, so this artifact was completed by a reviewer from the discovered draft." }
+  "policy": {
+    "maxRisk": "irreversible",
+    "requiresApproval": true
+  },
+  "provenance": {
+    "recordedAt": "2026-09-10T00:00:00Z",
+    "recordedBy": "manual",
+    "notes": "Hand-authored: the commit step is irreversible and is never executed during discovery, so this artifact was completed by a reviewer from the discovered draft."
+  }
 }

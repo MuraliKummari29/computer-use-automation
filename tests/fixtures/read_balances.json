@@ -18,12 +18,35 @@
     "versionObserved": "CoreServ 7.2.14"
   },
   "params": [
-    { "name": "memberNumber", "type": "string", "description": "The institution's member number", "required": true, "sensitive": true, "pattern": "^\\d{4,10}$", "example": "10001" }
+    {
+      "name": "memberNumber",
+      "type": "string",
+      "description": "The institution's member number",
+      "required": true,
+      "sensitive": true,
+      "pattern": "^\\d{4,10}$",
+      "example": "10001"
+    }
   ],
   "outputs": [
-    { "name": "memberName", "type": "string", "description": "Member display name", "sensitive": true },
-    { "name": "savingsBalance", "type": "currency", "description": "Current balance of the primary savings share (S01)", "sensitive": false },
-    { "name": "checkingBalance", "type": "currency", "description": "Current balance of the everyday checking share (S05)", "sensitive": false }
+    {
+      "name": "memberName",
+      "type": "string",
+      "description": "Member display name",
+      "sensitive": true
+    },
+    {
+      "name": "savingsBalance",
+      "type": "currency",
+      "description": "Current balance of the primary savings share (S01)",
+      "sensitive": false
+    },
+    {
+      "name": "checkingBalance",
+      "type": "currency",
+      "description": "Current balance of the everyday checking share (S05)",
+      "sensitive": false
+    }
   ],
   "steps": [
     {
@@ -31,19 +54,45 @@
       "action": "navigate",
       "url": "{entryUrl}",
       "description": "Open the console",
-      "tags": ["auth"],
+      "tags": [
+        "auth"
+      ],
       "risk": "read",
-      "expect": { "allOf": [{ "kind": "title", "contains": "Operator Sign In" }], "timeoutMs": 8000 },
+      "expect": {
+        "allOf": [
+          {
+            "kind": "title",
+            "contains": "Operator Sign In"
+          }
+        ],
+        "timeoutMs": 8000
+      },
       "timeoutMs": 8000
     },
     {
       "id": "user",
       "action": "type",
       "description": "Enter operator id",
-      "tags": ["auth"],
+      "tags": [
+        "auth"
+      ],
       "risk": "reversible",
-      "target": { "strategies": [{ "kind": "anchor", "anchorText": "Operator ID", "relation": "same-row", "controlRole": "textbox" }], "frame": "main", "rationale": "Legacy form: label cell to the left of the input, no <label for>." },
-      "value": { "kind": "secret", "name": "CORESERV_USER" },
+      "target": {
+        "strategies": [
+          {
+            "kind": "anchor",
+            "anchorText": "Operator ID",
+            "relation": "same-row",
+            "controlRole": "textbox"
+          }
+        ],
+        "frame": "main",
+        "rationale": "Legacy form: label cell to the left of the input, no <label for>."
+      },
+      "value": {
+        "kind": "secret",
+        "name": "CORESERV_USER"
+      },
       "clear": true,
       "timeoutMs": 8000
     },
@@ -51,10 +100,25 @@
       "id": "pass",
       "action": "type",
       "description": "Enter operator password",
-      "tags": ["auth"],
+      "tags": [
+        "auth"
+      ],
       "risk": "reversible",
-      "target": { "strategies": [{ "kind": "anchor", "anchorText": "Password", "relation": "same-row", "controlRole": "textbox" }], "frame": "main" },
-      "value": { "kind": "secret", "name": "CORESERV_PASSWORD" },
+      "target": {
+        "strategies": [
+          {
+            "kind": "anchor",
+            "anchorText": "Password",
+            "relation": "same-row",
+            "controlRole": "textbox"
+          }
+        ],
+        "frame": "main"
+      },
+      "value": {
+        "kind": "secret",
+        "name": "CORESERV_PASSWORD"
+      },
       "clear": true,
       "timeoutMs": 8000
     },
@@ -62,10 +126,42 @@
       "id": "signin",
       "action": "click",
       "description": "Sign in",
-      "tags": ["auth"],
+      "tags": [
+        "auth"
+      ],
       "risk": "reversible",
-      "target": { "strategies": [{ "kind": "role", "role": "button", "name": "Sign In", "exact": true }, { "kind": "bbox", "x": 455, "y": 235, "w": 54, "h": 20, "viewport": { "w": 1280, "h": 900 }, "expectRole": "button" }], "frame": "main" },
-      "expect": { "allOf": [{ "kind": "title", "contains": "Member Lookup" }], "timeoutMs": 8000 },
+      "target": {
+        "strategies": [
+          {
+            "kind": "role",
+            "role": "button",
+            "name": "Sign In",
+            "exact": true
+          },
+          {
+            "kind": "bbox",
+            "x": 455,
+            "y": 235,
+            "w": 54,
+            "h": 20,
+            "viewport": {
+              "w": 1280,
+              "h": 900
+            },
+            "expectRole": "button"
+          }
+        ],
+        "frame": "main"
+      },
+      "expect": {
+        "allOf": [
+          {
+            "kind": "title",
+            "contains": "Member Lookup"
+          }
+        ],
+        "timeoutMs": 8000
+      },
       "timeoutMs": 8000
     },
     {
@@ -74,8 +170,22 @@
       "description": "Enter the member number",
       "tags": [],
       "risk": "reversible",
-      "target": { "strategies": [{ "kind": "anchor", "anchorText": "Member Number", "relation": "same-row", "controlRole": "textbox" }], "frame": "main", "rationale": "Label cell text is the only stable handle; the input has no name attribute we trust." },
-      "value": { "kind": "param", "name": "memberNumber" },
+      "target": {
+        "strategies": [
+          {
+            "kind": "anchor",
+            "anchorText": "Member Number",
+            "relation": "same-row",
+            "controlRole": "textbox"
+          }
+        ],
+        "frame": "main",
+        "rationale": "Label cell text is the only stable handle; the input has no name attribute we trust."
+      },
+      "value": {
+        "kind": "param",
+        "name": "memberNumber"
+      },
       "clear": true,
       "timeoutMs": 8000
     },
@@ -85,8 +195,30 @@
       "description": "Run the lookup",
       "tags": [],
       "risk": "read",
-      "target": { "strategies": [{ "kind": "role", "role": "button", "name": "Find", "exact": true }], "frame": "main" },
-      "expect": { "allOf": [{ "kind": "title", "contains": "Member Summary - {memberNumber}" }, { "kind": "url", "pattern": "/app/member/{memberNumber}$" }], "timeoutMs": 8000 },
+      "target": {
+        "strategies": [
+          {
+            "kind": "role",
+            "role": "button",
+            "name": "Find",
+            "exact": true
+          }
+        ],
+        "frame": "main"
+      },
+      "expect": {
+        "allOf": [
+          {
+            "kind": "title",
+            "contains": "Member Summary - {memberNumber}"
+          },
+          {
+            "kind": "url",
+            "pattern": "/app/member/{memberNumber}$"
+          }
+        ],
+        "timeoutMs": 8000
+      },
       "timeoutMs": 8000
     },
     {
@@ -96,7 +228,15 @@
       "tags": [],
       "risk": "read",
       "output": "memberName",
-      "source": { "strategies": [{ "kind": "labeled-value", "label": "Name" }], "frame": "main" },
+      "source": {
+        "strategies": [
+          {
+            "kind": "labeled-value",
+            "label": "Name"
+          }
+        ],
+        "frame": "main"
+      },
       "parse": "text",
       "timeoutMs": 5000
     },
@@ -107,7 +247,17 @@
       "tags": [],
       "risk": "read",
       "output": "savingsBalance",
-      "source": { "strategies": [{ "kind": "table-cell", "rowAnchor": "Primary Savings", "columnHeader": "Balance" }], "frame": "main", "rationale": "Row is identified by the share nickname, column by header text; survives column reordering and row insertion." },
+      "source": {
+        "strategies": [
+          {
+            "kind": "table-cell",
+            "rowAnchor": "Primary Savings",
+            "columnHeader": "Balance"
+          }
+        ],
+        "frame": "main",
+        "rationale": "Row is identified by the share nickname, column by header text; survives column reordering and row insertion."
+      },
       "parse": "currency",
       "timeoutMs": 5000
     },
@@ -118,26 +268,37 @@
       "tags": [],
       "risk": "read",
       "output": "checkingBalance",
-      "source": { "strategies": [{ "kind": "table-cell", "rowAnchor": "Everyday Checking", "columnHeader": "Balance" }], "frame": "main" },
+      "source": {
+        "strategies": [
+          {
+            "kind": "table-cell",
+            "rowAnchor": "Everyday Checking",
+            "columnHeader": "Balance"
+          }
+        ],
+        "frame": "main"
+      },
       "parse": "currency",
       "timeoutMs": 5000
     }
   ],
-  "success": { "allOf": [{ "kind": "title", "contains": "Member Summary - {memberNumber}" }], "timeoutMs": 5000 },
+  "success": {
+    "allOf": [
+      {
+        "kind": "title",
+        "contains": "Member Summary - {memberNumber}"
+      }
+    ],
+    "timeoutMs": 5000
+  },
   "detectors": [],
-  "overrides": [
-    {
-      "tenantId": "summit",
-      "description": "Summit Community Bank labels the lookup field 'Account #' and runs a newer console build. The post-login compliance interstitial is handled by the shared app profile.",
-      "entryUrl": "http://localhost:4311/",
-      "patchSteps": {
-        "member-number": { "target": { "strategies": [{ "kind": "anchor", "anchorText": "Account #", "relation": "same-row", "controlRole": "textbox" }], "frame": "main" } }
-      },
-      "insertSteps": [],
-      "removeSteps": [],
-      "extraDetectors": []
-    }
-  ],
-  "policy": { "maxRisk": "reversible", "requiresApproval": false },
-  "provenance": { "recordedAt": "2026-09-10T00:00:00Z", "recordedBy": "manual", "notes": "Hand-authored test fixture mirroring the discovered capability." }
+  "policy": {
+    "maxRisk": "reversible",
+    "requiresApproval": false
+  },
+  "provenance": {
+    "recordedAt": "2026-09-10T00:00:00Z",
+    "recordedBy": "manual",
+    "notes": "Hand-authored test fixture mirroring the discovered capability."
+  }
 }

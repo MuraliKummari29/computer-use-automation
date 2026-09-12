@@ -17,6 +17,7 @@
  *   confirm_dialog     one-shot native confirm() on the sub-account form submit
  *   app_error          one-shot HTTP 500 on sub-account commit
  *   slow_commit        one-shot: sub-account commit takes effect immediately but responds after 20s (longer than settle + checkpoint)
+ *   notice_after_commit one-shot: sub-account commit takes effect, then a System Notice interstitial precedes the done page
  *   permission_denied  persistent: card block is refused
  *
  * State is in memory; POST /reset restores the seed data (used by tests and the evidence script).
@@ -202,6 +203,7 @@ export function createApp(opts: MockAppOptions = {}) {
       return res.status(500).send(V.appErrorPage(tenant, 'ERR-' + randomBytes(3).toString('hex').toUpperCase()));
     }
     const slowCommit = consumeFault(req, res, 'slow_commit');
+    const noticeAfter = consumeFault(req, res, 'notice_after_commit');
     const nextNum = mem.shares.length + 10;
     const shareId = `S${String(nextNum).padStart(2, '0')}`;
     const checking = mem.shares.find((s) => s.id === 'S05')!;
@@ -218,7 +220,14 @@ export function createApp(opts: MockAppOptions = {}) {
     const confirmation = 'CF' + Date.now().toString(36).toUpperCase();
     // The write has already happened above; a slow response is the dangerous case for a replayer.
     if (slowCommit) await new Promise((r) => setTimeout(r, 20000));
-    res.send(V.subAccountDone(tenant, mem, shareId, confirmation));
+    const done = `/app/member/${mem.number}/subaccount/done?share=${encodeURIComponent(shareId)}&conf=${encodeURIComponent(confirmation)}`;
+    if (noticeAfter) return res.send(V.systemNoticePage(tenant, done));
+    res.redirect(done);
+  });
+  app.get('/app/member/:n/subaccount/done', requireSession, (req, res) => {
+    const mem = MEMBERS[param(req, 'n')];
+    if (!mem) return res.status(404).send(V.notFoundPage(tenant));
+    res.send(V.subAccountDone(tenant, mem, String(req.query.share ?? ''), String(req.query.conf ?? '')));
   });
 
   // --- card services (permission-gated, irreversible-ish) ---

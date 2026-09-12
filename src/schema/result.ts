@@ -75,6 +75,8 @@ const ResultBase = {
   finishedAt: z.string(),
   durationMs: z.number(),
   steps: z.array(StepReport),
+  /** Non-fatal signals: locator drift/ambiguity, vendor build differs from the recording, unknown build. */
+  warnings: z.array(z.string()).default([]),
   interventions: z.array(InterventionRecord).default([]),
   evidenceDir: z.string(),
 };

@@ -1,0 +1,360 @@
+{
+  "schemaVersion": "1.0",
+  "id": "coreserv.member.read_share_balances",
+  "name": "Look up member name and share balances",
+  "version": "1.0.0",
+  "status": "draft",
+  "description": "Given a full member number, signs in to the CoreServ 7.2.14 back-office console, performs a Member Lookup, and returns the member's name along with the current savings and checking share balances from the Member Summary screen. Outputs: memberName (string, member's full name as shown in the \"Name\" label — treated as PII/sensitive), savingsBalance (currency, Balance column of the \"Primary Savings\" savings share row), checkingBalance (currency, Balance column of the \"Everyday Checking\" checking share row).",
+  "usage": {
+    "whenToUse": "Use when an agent or operator needs a quick, read-only balance and identity check for a specific credit-union member and already knows the exact member number — e.g. answering a member's balance inquiry, verifying funds before a follow-up task, or confirming the account holder's name before servicing.",
+    "notFor": "Not for searching by name, SSN, phone or partial member number (the lookup requires the full member number). Not for loan balances, transaction history, or sub-account/card servicing, and not for any action that modifies the member record — this capability only reads the Member Summary screen. Note: it returns the single savings and single checking share shown on the summary; members with multiple shares of the same type may need a broader read."
+  },
+  "app": {
+    "vendor": "CoreServ",
+    "profile": "coreserv",
+    "surface": "web",
+    "entryUrl": "http://localhost:4310/",
+    "recordedOnTenant": "harbor",
+    "versionObserved": "CoreServ 7.2.14"
+  },
+  "params": [
+    {
+      "name": "memberNumber",
+      "type": "string",
+      "description": "The member's full account/member number as it appears in CoreServ, e.g. \"***0001\". Partial numbers are not accepted by the lookup.",
+      "required": true,
+      "sensitive": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "memberName",
+      "type": "string",
+      "description": "Full name of the member on the Member Summary header block.",
+      "sensitive": true
+    },
+    {
+      "name": "savingsBalance",
+      "type": "currency",
+      "description": "Current balance of the member's savings share (S01 Primary Savings) in the Shares table.",
+      "sensitive": false
+    },
+    {
+      "name": "checkingBalance",
+      "type": "currency",
+      "description": "Current balance of the member's checking share (S05 Everyday Checking) in the Shares table.",
+      "sensitive": false
+    }
+  ],
+  "steps": [
+    {
+      "id": "open-1",
+      "action": "navigate",
+      "url": "{entryUrl}",
+      "description": "Load the CoreServ console entry point to begin the member lookup.",
+      "tags": [],
+      "risk": "read",
+      "expect": {
+        "allOf": [
+          {
+            "kind": "title",
+            "contains": "Operator Sign In"
+          }
+        ],
+        "timeoutMs": 8000
+      },
+      "timeoutMs": 8000
+    },
+    {
+      "id": "type-2",
+      "action": "type",
+      "target": {
+        "strategies": [
+          {
+            "kind": "anchor",
+            "anchorText": "Operator ID",
+            "relation": "same-row",
+            "controlRole": "textbox"
+          },
+          {
+            "kind": "bbox",
+            "x": 282.59375,
+            "y": 117,
+            "w": 133,
+            "h": 20,
+            "viewport": {
+              "w": 1280,
+              "h": 900
+            },
+            "expectRole": "textbox"
+          }
+        ],
+        "frame": "main",
+        "rationale": "Legacy form control without a programmatic label; \"Operator ID\" is the adjacent label cell."
+      },
+      "value": {
+        "kind": "secret",
+        "name": "CORESERV_USER"
+      },
+      "clear": true,
+      "description": "Enter the operator ID to sign in.",
+      "tags": [
+        "auth"
+      ],
+      "risk": "reversible",
+      "timeoutMs": 8000
+    },
+    {
+      "id": "type-3",
+      "action": "type",
+      "target": {
+        "strategies": [
+          {
+            "kind": "anchor",
+            "anchorText": "Password",
+            "relation": "same-row",
+            "controlRole": "textbox"
+          },
+          {
+            "kind": "bbox",
+            "x": 282.59375,
+            "y": 147,
+            "w": 133,
+            "h": 20,
+            "viewport": {
+              "w": 1280,
+              "h": 900
+            },
+            "expectRole": "textbox"
+          }
+        ],
+        "frame": "main",
+        "rationale": "Legacy form control without a programmatic label; \"Password\" is the adjacent label cell."
+      },
+      "value": {
+        "kind": "secret",
+        "name": "CORESERV_PASSWORD"
+      },
+      "clear": true,
+      "description": "Enter the operator password to sign in.",
+      "tags": [
+        "auth"
+      ],
+      "risk": "reversible",
+      "timeoutMs": 8000
+    },
+    {
+      "id": "click-4",
+      "action": "click",
+      "target": {
+        "strategies": [
+          {
+            "kind": "role",
+            "role": "button",
+            "name": "Sign In",
+            "exact": true
+          },
+          {
+            "kind": "bbox",
+            "x": 282.59375,
+            "y": 177,
+            "w": 53.359375,
+            "h": 20,
+            "viewport": {
+              "w": 1280,
+              "h": 900
+            },
+            "expectRole": "button"
+          }
+        ],
+        "frame": "main",
+        "rationale": "Accessible button named \"Sign In\"."
+      },
+      "description": "Submit the sign-in form to authenticate.",
+      "tags": [
+        "auth"
+      ],
+      "risk": "reversible",
+      "expect": {
+        "allOf": [
+          {
+            "kind": "title",
+            "contains": "Member Lookup"
+          },
+          {
+            "kind": "url",
+            "pattern": "/app/search$"
+          }
+        ],
+        "timeoutMs": 8000
+      },
+      "timeoutMs": 8000
+    },
+    {
+      "id": "type-5",
+      "action": "type",
+      "target": {
+        "strategies": [
+          {
+            "kind": "anchor",
+            "anchorText": "Member Number",
+            "relation": "same-row",
+            "controlRole": "textbox"
+          },
+          {
+            "kind": "bbox",
+            "x": 319.03125,
+            "y": 117,
+            "w": 109,
+            "h": 20,
+            "viewport": {
+              "w": 1280,
+              "h": 900
+            },
+            "expectRole": "textbox"
+          }
+        ],
+        "frame": "main",
+        "rationale": "Legacy form control without a programmatic label; \"Member Number\" is the adjacent label cell."
+      },
+      "value": {
+        "kind": "param",
+        "name": "memberNumber"
+      },
+      "clear": true,
+      "description": "Enter the caller-supplied member number to look up the account.",
+      "tags": [],
+      "risk": "reversible",
+      "timeoutMs": 8000
+    },
+    {
+      "id": "click-6",
+      "action": "click",
+      "target": {
+        "strategies": [
+          {
+            "kind": "role",
+            "role": "button",
+            "name": "Find",
+            "exact": true
+          },
+          {
+            "kind": "bbox",
+            "x": 438.03125,
+            "y": 117,
+            "w": 39.34375,
+            "h": 20,
+            "viewport": {
+              "w": 1280,
+              "h": 900
+            },
+            "expectRole": "button"
+          }
+        ],
+        "frame": "main",
+        "rationale": "Accessible button named \"Find\"."
+      },
+      "description": "Submit the lookup to open the member's account summary.",
+      "tags": [],
+      "risk": "reversible",
+      "expect": {
+        "allOf": [
+          {
+            "kind": "title",
+            "contains": "Member Summary - {memberNumber}"
+          },
+          {
+            "kind": "url",
+            "pattern": "/app/member/{memberNumber}$"
+          }
+        ],
+        "timeoutMs": 8000
+      },
+      "timeoutMs": 8000
+    },
+    {
+      "id": "extract-7",
+      "action": "extract",
+      "output": "memberName",
+      "source": {
+        "strategies": [
+          {
+            "kind": "labeled-value",
+            "label": "Name"
+          }
+        ],
+        "frame": "main",
+        "rationale": "Value cell adjacent to its label cell."
+      },
+      "parse": "text",
+      "description": "Full name of the member on the Member Summary header block.",
+      "tags": [],
+      "risk": "read",
+      "timeoutMs": 5000
+    },
+    {
+      "id": "extract-8",
+      "action": "extract",
+      "output": "savingsBalance",
+      "source": {
+        "strategies": [
+          {
+            "kind": "table-cell",
+            "rowAnchor": "Primary Savings",
+            "columnHeader": "Balance"
+          }
+        ],
+        "frame": "main",
+        "rationale": "Row anchored by its label text, column by header text."
+      },
+      "parse": "currency",
+      "description": "Current balance of the member's savings share (S01 Primary Savings) in the Shares table.",
+      "tags": [],
+      "risk": "read",
+      "timeoutMs": 5000
+    },
+    {
+      "id": "extract-9",
+      "action": "extract",
+      "output": "checkingBalance",
+      "source": {
+        "strategies": [
+          {
+            "kind": "table-cell",
+            "rowAnchor": "Everyday Checking",
+            "columnHeader": "Balance"
+          }
+        ],
+        "frame": "main",
+        "rationale": "Row anchored by its label text, column by header text."
+      },
+      "parse": "currency",
+      "description": "Current balance of the member's checking share (S05 Everyday Checking) in the Shares table.",
+      "tags": [],
+      "risk": "read",
+      "timeoutMs": 5000
+    }
+  ],
+  "success": {
+    "allOf": [
+      {
+        "kind": "title",
+        "contains": "Member Summary - {memberNumber}"
+      }
+    ],
+    "timeoutMs": 5000
+  },
+  "detectors": [],
+  "policy": {
+    "maxRisk": "reversible",
+    "requiresApproval": false
+  },
+  "provenance": {
+    "recordedAt": "2026-09-12T20:52:05.235Z",
+    "recordedBy": "discovery",
+    "model": "claude-opus-5",
+    "discoveryRunId": "discovery-20260912T205126Z-1f36",
+    "evidenceRef": "evidence/discovery-20260912T205126Z-1f36",
+    "notes": "Draft recorded by the discovery agent. Review locators and checkpoints, then set status to \"approved\" to allow unattended replay."
+  }
+}

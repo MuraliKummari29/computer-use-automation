@@ -1,0 +1,26 @@
+{
+  "capabilityId": "coreserv.member.block_card",
+  "baseVersion": "1.0.0",
+  "tenantId": "summit",
+  "status": "approved",
+  "description": "Summit Community Bank labels the lookup field 'Account #'; its post-login compliance interstitial is handled by the shared app profile.",
+  "entryUrl": "http://localhost:4311/",
+  "patchSteps": {
+    "member-number": {
+      "target": {
+        "strategies": [
+          {
+            "kind": "anchor",
+            "anchorText": "Account #",
+            "relation": "same-row",
+            "controlRole": "textbox"
+          }
+        ],
+        "frame": "main"
+      }
+    }
+  },
+  "insertSteps": [],
+  "removeSteps": [],
+  "extraDetectors": []
+}

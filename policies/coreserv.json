@@ -48,7 +48,11 @@
   "discovery": {
     "maxSteps": 30,
     "maxDurationMs": 600000,
-    "allowIrreversible": false
+    "allowIrreversible": false,
+    "knownSafeControls": [
+      "^(Sign In|Find|New Lookup|Card Services|Open Sub-Account|Continue|Back|Cancel|Acknowledge|I Acknowledge|Place Temporary Block|Return to member summary)$"
+    ],
+    "unknownSubmit": "block"
   },
   "redaction": {
     "patterns": [

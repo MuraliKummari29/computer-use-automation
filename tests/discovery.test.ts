@@ -14,7 +14,7 @@ import { RunEvidence, newRunId } from '../src/evidence/logger.js';
 import { loadPolicy, runReplay } from '../src/replay/run.js';
 import { parseCapability } from '../src/schema/capability.js';
 
-process.env.CORESERV_USER = 'operator';
+process.env.CORESERV_USER = 'tlr0421';
 process.env.CORESERV_PASSWORD = 'demo123';
 
 let app: { close: () => Promise<void> };
@@ -47,7 +47,7 @@ function fakeClient() {
     let input: Record<string, unknown>;
     let name = 'act';
     if (turn === 1) input = { action: 'navigate', url: 'http://localhost:4310/', reason: 'open the console' };
-    else if (text.includes('title="Operator Sign In"') && !text.includes('value="operator"'))
+    else if (text.includes('title="Operator Sign In"') && !text.includes('value="tlr0421"'))
       input = { action: 'type', mark: markOf(text, 'textbox', 'Operator ID'), secret: 'CORESERV_USER', reason: 'enter operator id' };
     else if (text.includes('title="Operator Sign In"') && !text.includes('value="••••"'))
       input = { action: 'type', mark: markOf(text, 'textbox', 'Password'), secret: 'CORESERV_PASSWORD', reason: 'enter password' };
@@ -171,7 +171,7 @@ describe('discovery loop: escalation to a human', () => {
       expect(req.code).toBe('DISCOVERY_STUCK');
       expect(req.screenshotPath).toBeTruthy();
       // the human signs in on the live session, then hands back
-      await s!.act({ type: 'type', target: { locator: { strategies: [{ kind: 'anchor', anchorText: 'Operator ID', relation: 'same-row', controlRole: 'textbox' }] } }, text: 'operator' });
+      await s!.act({ type: 'type', target: { locator: { strategies: [{ kind: 'anchor', anchorText: 'Operator ID', relation: 'same-row', controlRole: 'textbox' }] } }, text: 'tlr0421' });
       await s!.act({ type: 'type', target: { locator: { strategies: [{ kind: 'anchor', anchorText: 'Password', relation: 'same-row', controlRole: 'textbox' }] } }, text: 'demo123', secret: true });
       await s!.act({ type: 'click', target: { locator: { strategies: [{ kind: 'role', role: 'button', name: 'Sign In', exact: true }] } } });
       return { resolution: 'retry', operator: 'pat', notes: 'signed in for the agent' };

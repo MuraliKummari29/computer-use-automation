@@ -38,6 +38,13 @@ export const Policy = z.object({
     maxDurationMs: z.number().int().positive().default(10 * 60_000),
     /** Discovery may never execute irreversible actions itself; it records them for replay approval. */
     allowIrreversible: z.boolean().default(false),
+    /**
+     * Deny-by-default for submits: during discovery a button whose name matches none of these patterns is not
+     * clicked (a real core's "Post" / "Save" / "Process" buttons are not on any irreversible regex until someone
+     * writes it). Links and typing are unaffected. Grown per vendor from escalations.
+     */
+    knownSafeControls: z.array(z.string()).default([]),
+    unknownSubmit: z.enum(['block', 'allow']).default('block'),
   }),
   redaction: z.object({
     /** Regexes scrubbed from any text that reaches logs, transcripts or artifacts. */

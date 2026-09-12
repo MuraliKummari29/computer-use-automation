@@ -1,0 +1,374 @@
+[
+  {
+    "role": "user",
+    "content": "Goal: Look up member ***0001 and read their current savings balance, checking balance, and the member's name\n\nApplication entry point: http://localhost:4310/\nParameters supplied by the caller (use \"param\" to enter them):\n- memberNumber = \"***0001\"\nSecrets available (use \"secret\" to enter them; you never see the values):\n- CORESERV_USER\n- CORESERV_PASSWORD\n\nBegin by navigating to the entry point."
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "I'll start by navigating to the application entry point."
+      },
+      {
+        "type": "tool_use",
+        "id": "toolu_019JrzRj4p3ueX3A7FQxtR8G",
+        "name": "act",
+        "input": {
+          "action": "navigate",
+          "url": "http://localhost:4310/",
+          "reason": "Load the CoreServ console entry point to begin the member lookup."
+        },
+        "caller": {
+          "type": "direct"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "toolu_019JrzRj4p3ueX3A7FQxtR8G",
+        "content": [
+          {
+            "type": "text",
+            "text": "[screenshot]"
+          },
+          {
+            "type": "text",
+            "text": "Current page: title=\"Operator Sign In\" url=http://localhost:4310/app/login\nInteractive controls (mark: role \"name\" [frame]):\n1: link \"Sign In\" [nav]\n2: textbox \"Operator ID\" [main]\n3: textbox \"Password\" [main]\n4: button \"Sign In\" [main]\n\nVisible text:\n[frame (root)]\n\n\n[frame top]\nHarbor Federal Credit Union   Back Office Console\tNot signed in\n\n[frame nav]\nMENU\nSign In\nCoreServ 7.2.14\n\n[frame main]\nOperator Sign In\n\n\nOperator ID\nPassword\n\n\n\n\nCoreServ 7.2.14 · Harbor Federal Credit Union\n[screenshot saved: evidence/discovery-20260912T205126Z-1f36/step-01.png]"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "I need to sign in. Let me enter the operator credentials."
+      },
+      {
+        "type": "tool_use",
+        "id": "toolu_01BbnkoL8u7J3w1VsJXGLRQX",
+        "name": "act",
+        "input": {
+          "action": "type",
+          "mark": 2,
+          "secret": "CORESERV_USER",
+          "reason": "Enter the operator ID to sign in.",
+          "tags": [
+            "auth"
+          ]
+        },
+        "caller": {
+          "type": "direct"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "toolu_01BbnkoL8u7J3w1VsJXGLRQX",
+        "content": [
+          {
+            "type": "text",
+            "text": "[screenshot]"
+          },
+          {
+            "type": "text",
+            "text": "Current page: title=\"Operator Sign In\" url=http://localhost:4310/app/login\nInteractive controls (mark: role \"name\" [frame]):\n1: link \"Sign In\" [nav]\n2: textbox \"Operator ID\" [main] value=\"[secret]\"\n3: textbox \"Password\" [main]\n4: button \"Sign In\" [main]\n\nVisible text:\n[frame (root)]\n\n\n[frame top]\nHarbor Federal Credit Union   Back Office Console\tNot signed in\n\n[frame nav]\nMENU\nSign In\nCoreServ 7.2.14\n\n[frame main]\nOperator Sign In\n\n\nOperator ID\nPassword\n\n\n\n\nCoreServ 7.2.14 · Harbor Federal Credit Union\n[screenshot saved: evidence/discovery-20260912T205126Z-1f36/step-02.png]"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "toolu_01NXM5A2onJvSURrDUiaNRhF",
+        "name": "act",
+        "input": {
+          "action": "type",
+          "mark": 3,
+          "secret": "CORESERV_PASSWORD",
+          "reason": "Enter the operator password to sign in.",
+          "tags": [
+            "auth"
+          ]
+        },
+        "caller": {
+          "type": "direct"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "toolu_01NXM5A2onJvSURrDUiaNRhF",
+        "content": [
+          {
+            "type": "text",
+            "text": "[screenshot]"
+          },
+          {
+            "type": "text",
+            "text": "Current page: title=\"Operator Sign In\" url=http://localhost:4310/app/login\nInteractive controls (mark: role \"name\" [frame]):\n1: link \"Sign In\" [nav]\n2: textbox \"Operator ID\" [main] value=\"[secret]\"\n3: textbox \"Password\" [main] value=\"••••\"\n4: button \"Sign In\" [main]\n\nVisible text:\n[frame (root)]\n\n\n[frame top]\nHarbor Federal Credit Union   Back Office Console\tNot signed in\n\n[frame nav]\nMENU\nSign In\nCoreServ 7.2.14\n\n[frame main]\nOperator Sign In\n\n\nOperator ID\nPassword\n\n\n\n\nCoreServ 7.2.14 · Harbor Federal Credit Union\n[screenshot saved: evidence/discovery-20260912T205126Z-1f36/step-03.png]"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "toolu_017dTTgrKyrvh6crqHNmugaW",
+        "name": "act",
+        "input": {
+          "action": "click",
+          "mark": 4,
+          "reason": "Submit the sign-in form to authenticate.",
+          "tags": [
+            "auth"
+          ]
+        },
+        "caller": {
+          "type": "direct"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "toolu_017dTTgrKyrvh6crqHNmugaW",
+        "content": [
+          {
+            "type": "text",
+            "text": "[screenshot]"
+          },
+          {
+            "type": "text",
+            "text": "Current page: title=\"Member Lookup\" url=http://localhost:4310/app/search\nInteractive controls (mark: role \"name\" [frame]):\n1: link \"Sign In\" [nav]\n2: textbox \"Member Number\" [main]\n3: button \"Find\" [main]\n\nVisible text:\n[frame (root)]\n\n\n[frame top]\nHarbor Federal Credit Union   Back Office Console\tNot signed in\n\n[frame nav]\nMENU\nSign In\nCoreServ 7.2.14\n\n[frame main]\nMember Lookup\n\n\nMember Number\nEnter the full member number and press Find.\n\n\nCoreServ 7.2.14 · Harbor Federal Credit Union\n[screenshot saved: evidence/discovery-20260912T205126Z-1f36/step-04.png]"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "I'm now on the Member Lookup page. Let me enter the member number."
+      },
+      {
+        "type": "tool_use",
+        "id": "toolu_01VzSts49Et2ftpdAEkHANRX",
+        "name": "act",
+        "input": {
+          "action": "type",
+          "mark": 2,
+          "param": "memberNumber",
+          "reason": "Enter the caller-supplied member number to look up the account."
+        },
+        "caller": {
+          "type": "direct"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "toolu_01VzSts49Et2ftpdAEkHANRX",
+        "content": [
+          {
+            "type": "text",
+            "text": "[screenshot]"
+          },
+          {
+            "type": "text",
+            "text": "Current page: title=\"Member Lookup\" url=http://localhost:4310/app/search\nInteractive controls (mark: role \"name\" [frame]):\n1: link \"Sign In\" [nav]\n2: textbox \"Member Number\" [main] value=\"***0001\"\n3: button \"Find\" [main]\n\nVisible text:\n[frame (root)]\n\n\n[frame top]\nHarbor Federal Credit Union   Back Office Console\tNot signed in\n\n[frame nav]\nMENU\nSign In\nCoreServ 7.2.14\n\n[frame main]\nMember Lookup\n\n\nMember Number\nEnter the full member number and press Find.\n\n\nCoreServ 7.2.14 · Harbor Federal Credit Union\n[screenshot saved: evidence/discovery-20260912T205126Z-1f36/step-05.png]"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "toolu_01VyKBGuW6L9DKZ1zqWyjQ5m",
+        "name": "act",
+        "input": {
+          "action": "click",
+          "mark": 3,
+          "reason": "Submit the lookup to open the member's account summary."
+        },
+        "caller": {
+          "type": "direct"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "toolu_01VyKBGuW6L9DKZ1zqWyjQ5m",
+        "content": [
+          {
+            "type": "text",
+            "text": "[screenshot]"
+          },
+          {
+            "type": "text",
+            "text": "Current page: title=\"Member Summary - ***0001\" url=http://localhost:4310/app/member/***0001\nInteractive controls (mark: role \"name\" [frame]):\n1: link \"Sign In\" [nav]\n2: button \"Open Sub-Account\" [main]\n3: button \"Card Services\" [main]\n4: button \"New Lookup\" [main]\n\nVisible text:\n[frame (root)]\n\n\n[frame top]\nHarbor Federal Credit Union   Back Office Console\tNot signed in\n\n[frame nav]\nMENU\nSign In\nCoreServ 7.2.14\n\n[frame main]\nMember Summary - ***0001\n\n\nName\t******view\t\tMember Number\t***0001\nSSN\t***-**-####\t\tMember Since\t2015-03-11\nPhone\t[phone]\t\tAddress\t[address]\n\nShares\nID\tType\tNickname\tBalance\tAvailable\nS01\tSavings\tPrimary Savings\t$2,540.12\t$2,535.12\nS05\tChecking\tEveryday Checking\t$1,203.55\t$1,203.55\n\nLoans\nID\tType\tBalance\tNext Payment\tDue\nL20\tAuto Loan\t$11,250.00\t$312.40\t2026-10-01\n\n\n\n\n\n\n\nCoreServ 7.2.14 · Harbor Federal Credit Union\n[screenshot saved: evidence/discovery-20260912T205126Z-1f36/step-06.png]"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "[thinking]"
+      },
+      {
+        "type": "text",
+        "text": "The Member Summary page shows all the requested data. Let me extract the three values."
+      },
+      {
+        "type": "tool_use",
+        "id": "toolu_01Kt52KrwsKg9wEwvjumZvPd",
+        "name": "extract",
+        "input": {
+          "output": "memberName",
+          "value": "******view",
+          "type": "string",
+          "label": "Name",
+          "description": "Full name of the member on the Member Summary header block.",
+          "sensitive": true
+        },
+        "caller": {
+          "type": "direct"
+        }
+      },
+      {
+        "type": "tool_use",
+        "id": "toolu_01NUFy5da9kWC5bNw7k3XYzY",
+        "name": "extract",
+        "input": {
+          "output": "savingsBalance",
+          "value": "$2,540.12",
+          "type": "currency",
+          "rowAnchor": "Primary Savings",
+          "columnHeader": "Balance",
+          "description": "Current balance of the member's savings share (S01 Primary Savings) in the Shares table."
+        },
+        "caller": {
+          "type": "direct"
+        }
+      },
+      {
+        "type": "tool_use",
+        "id": "toolu_014zWLCYdsk2z4jB6AfMojfJ",
+        "name": "extract",
+        "input": {
+          "output": "checkingBalance",
+          "value": "$1,203.55",
+          "type": "currency",
+          "rowAnchor": "Everyday Checking",
+          "columnHeader": "Balance",
+          "description": "Current balance of the member's checking share (S05 Everyday Checking) in the Shares table."
+        },
+        "caller": {
+          "type": "direct"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "toolu_01Kt52KrwsKg9wEwvjumZvPd",
+        "content": "Recorded output memberName (sensitive; masked in evidence)."
+      },
+      {
+        "type": "tool_result",
+        "tool_use_id": "toolu_01NUFy5da9kWC5bNw7k3XYzY",
+        "content": "Recorded output savingsBalance = $2,540.12."
+      },
+      {
+        "type": "tool_result",
+        "tool_use_id": "toolu_014zWLCYdsk2z4jB6AfMojfJ",
+        "content": "Recorded output checkingBalance = $1,203.55."
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "All three values captured from the Member Summary screen. The goal is achieved — read-only lookup, no changes made."
+      },
+      {
+        "type": "tool_use",
+        "id": "toolu_01HnJkXFNGaPHhWbUhvrESGx",
+        "name": "finish",
+        "input": {
+          "summary": "Signed in to the CoreServ back-office console, opened Member Lookup, searched for member number ***0001, and read the Member Summary screen. Extracted the member name (******view), savings balance ($2,540.12 from the \"Primary Savings\" row of the Shares table) and checking balance ($1,203.55 from the \"Everyday Checking\" row). Read-only: no records were modified.",
+          "capabilityId": "coreserv.member.read_share_balances",
+          "name": "Look up member name and share balances",
+          "description": "Given a full member number, signs in to the CoreServ 7.2.14 back-office console, performs a Member Lookup, and returns the member's name along with the current savings and checking share balances from the Member Summary screen. Outputs: memberName (string, member's full name as shown in the \"Name\" label — treated as PII/sensitive), savingsBalance (currency, Balance column of the \"Primary Savings\" savings share row), checkingBalance (currency, Balance column of the \"Everyday Checking\" checking share row).",
+          "whenToUse": "Use when an agent or operator needs a quick, read-only balance and identity check for a specific credit-union member and already knows the exact member number — e.g. answering a member's balance inquiry, verifying funds before a follow-up task, or confirming the account holder's name before servicing.",
+          "notFor": "Not for searching by name, SSN, phone or partial member number (the lookup requires the full member number). Not for loan balances, transaction history, or sub-account/card servicing, and not for any action that modifies the member record — this capability only reads the Member Summary screen. Note: it returns the single savings and single checking share shown on the summary; members with multiple shares of the same type may need a broader read.",
+          "params": [
+            {
+              "name": "memberNumber",
+              "description": "The member's full account/member number as it appears in CoreServ, e.g. \"***0001\". Partial numbers are not accepted by the lookup."
+            }
+          ]
+        },
+        "caller": {
+          "type": "direct"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "toolu_01HnJkXFNGaPHhWbUhvrESGx",
+        "content": "Recorded."
+      }
+    ]
+  }
+]

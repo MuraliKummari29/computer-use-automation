@@ -8,13 +8,15 @@ import type { SurfaceAction } from '../surface/types.js';
 
 export type GuardVerdict =
   | { allowed: true; risk: RiskClass; flagged?: string }
-  | { allowed: false; reason: string; code: 'ORIGIN_NOT_ALLOWED' | 'PATH_NOT_ALLOWED' | 'ACTION_NOT_ALLOWED' | 'IRREVERSIBLE_BLOCKED' | 'IRREVERSIBLE_NEEDS_APPROVAL' };
+  | { allowed: false; reason: string; code: 'ORIGIN_NOT_ALLOWED' | 'PATH_NOT_ALLOWED' | 'ACTION_NOT_ALLOWED' | 'IRREVERSIBLE_BLOCKED' | 'IRREVERSIBLE_NEEDS_APPROVAL' | 'UNKNOWN_SUBMIT_BLOCKED' };
 
 export interface GuardContext {
   /** URL the surface is currently on. */
   currentUrl: string;
   /** Accessible name of the control being acted on, if any. */
   controlName?: string;
+  /** Role of the control (button = a submit-like control; link = navigation). */
+  controlRole?: string;
   /** Caller-supplied approval for irreversible actions on this invocation. */
   approveIrreversible?: boolean;
   /** Discovery runs are never allowed to execute irreversible actions unless the policy says so. */
@@ -75,6 +77,17 @@ export class PolicyGuard {
       if (mode === 'require-approval' && !ctx.approveIrreversible)
         return { allowed: false, reason: `irreversible action "${ctx.controlName}" requires approval`, code: 'IRREVERSIBLE_NEEDS_APPROVAL' };
       return { allowed: true, risk, flagged: `irreversible action "${ctx.controlName}" executed under ${mode}` };
+    }
+    // Discovery: a submit we cannot vouch for is not clicked. The model is told to escalate if it is required.
+    if (ctx.mode === 'discovery' && (action.type === 'click' || action.type === 'press') && ctx.controlRole === 'button' && this.policy.discovery.unknownSubmit === 'block') {
+      const name = ctx.controlName ?? '';
+      const known = this.policy.discovery.knownSafeControls.some((p) => new RegExp(p).test(name));
+      if (!known)
+        return {
+          allowed: false,
+          reason: `button "${name || '(unnamed)'}" is not on the known-safe list for discovery; it may post a change. Escalate so a human performs it, or extend policy.discovery.knownSafeControls after review`,
+          code: 'UNKNOWN_SUBMIT_BLOCKED',
+        };
     }
     return { allowed: true, risk };
   }

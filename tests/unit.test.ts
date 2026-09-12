@@ -73,9 +73,10 @@ describe('replay helpers', () => {
     expect(parseValue('1,200', 'number')).toBe(1200);
     expect(parseValue(' Alice  Harborview ', 'text')).toBe('Alice Harborview');
   });
-  it('applies tenant overrides without touching the base steps', () => {
+  it('applies tenant overrides without touching the base steps', async () => {
     const cap = parseCapability(JSON.parse(readFileSync('tests/fixtures/read_balances.json', 'utf8')));
-    const summit = applyOverride(cap.steps, cap.overrides[0]);
+    const { parseOverride } = await import('../src/schema/capability.js');
+    const summit = applyOverride(cap.steps, parseOverride(JSON.parse(readFileSync('tests/fixtures/overrides/coreserv.member.read_balances.summit.json', 'utf8'))));
     const s = summit.find((x) => x.id === 'member-number')!;
     expect(s.action === 'type' && s.target.strategies[0].kind === 'anchor' && s.target.strategies[0].anchorText).toBe('Account #');
     const base = cap.steps.find((x) => x.id === 'member-number')!;
@@ -92,15 +93,32 @@ describe('recorder canonicalisation', () => {
     expect(r.canonicalize('Sub-Account Opened')).toBe('Sub-Account Opened');
     expect(r.canonicalize('Nickname: Sub')).toBe('Nickname: {nickname}');
     expect(r.canonicalize('id 100011')).toBe('id 100011');
+    const r2 = new Recorder({ entryUrl: 'http://x/', params: { initialDeposit: '100' }, sensitiveParams: new Set(), secretNames: [] });
+    expect(r2.canonicalize('Initial Deposit $100.00 (from S05)')).toBe('Initial Deposit $100.00 (from S05)');
+    expect(r2.canonicalize('Balance 1,100.00')).toBe('Balance 1,100.00');
+    expect(r2.canonicalize('Deposit: 100')).toBe('Deposit: {initialDeposit}');
   });
   it('deep-merges tenant patches one level so a patched target keeps unpatched fields', async () => {
     const { applyOverride } = await import('../src/replay/engine.js');
     const cap = parseCapability(JSON.parse(readFileSync('tests/fixtures/read_balances.json', 'utf8')));
     const base = cap.steps.find((s) => s.id === 'member-number')!;
-    const patched = applyOverride(cap.steps, { tenantId: 't', patchSteps: { 'member-number': { target: { frame: 'other' } } }, insertSteps: [], removeSteps: [], extraDetectors: [] }).find((s) => s.id === 'member-number')!;
+    const patched = applyOverride(cap.steps, { capabilityId: cap.id, baseVersion: cap.version, tenantId: 't', status: 'approved', patchSteps: { 'member-number': { target: { frame: 'other' } } }, insertSteps: [], removeSteps: [], extraDetectors: [] }).find((s) => s.id === 'member-number')!;
     if (patched.action !== 'type' || base.action !== 'type') throw new Error('unexpected step shape');
     expect(patched.target.frame).toBe('other');
     expect(patched.target.strategies).toEqual(base.target.strategies);
+  });
+});
+
+describe('policy guard: discovery denies unknown submits', () => {
+  const guard = new PolicyGuard(policy);
+  const click = { type: 'click' as const, target: { mark: 1 } };
+  const url = 'http://localhost:4310/app/member/10001/cards';
+  it('blocks a button that is on no list (a real core\'s "Post"), allows known-safe buttons and links', () => {
+    expect(guard.check(click, { currentUrl: url, controlName: 'Post', controlRole: 'button', mode: 'discovery' })).toMatchObject({ allowed: false, code: 'UNKNOWN_SUBMIT_BLOCKED' });
+    expect(guard.check(click, { currentUrl: url, controlName: 'Find', controlRole: 'button', mode: 'discovery' })).toMatchObject({ allowed: true });
+    expect(guard.check(click, { currentUrl: url, controlName: 'Post', controlRole: 'link', mode: 'discovery' })).toMatchObject({ allowed: true });
+    // replay trusts the reviewed artifact: same click is allowed
+    expect(guard.check(click, { currentUrl: url, controlName: 'Post', controlRole: 'button', mode: 'replay' })).toMatchObject({ allowed: true });
   });
 });
 

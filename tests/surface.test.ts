@@ -9,7 +9,7 @@ beforeAll(async () => {
   app = await ensureMockApp({ port: 4310, tenant: 'harbor' });
   surface = await PlaywrightSurface.launch({ headless: true });
   await surface.act({ type: 'navigate', url: 'http://localhost:4310/' });
-  await surface.act({ type: 'type', target: { locator: { strategies: [{ kind: 'anchor', anchorText: 'Operator ID', relation: 'same-row', controlRole: 'textbox' }] } }, text: 'operator' });
+  await surface.act({ type: 'type', target: { locator: { strategies: [{ kind: 'anchor', anchorText: 'Operator ID', relation: 'same-row', controlRole: 'textbox' }] } }, text: 'tlr0421' });
   await surface.act({ type: 'type', target: { locator: { strategies: [{ kind: 'anchor', anchorText: 'Password', relation: 'same-row', controlRole: 'textbox' }] } }, text: 'demo123' });
   await surface.act({ type: 'click', target: { locator: { strategies: [{ kind: 'role', role: 'button', name: 'Sign In', exact: true }] } } });
   await surface.act({ type: 'type', target: { locator: { strategies: [{ kind: 'anchor', anchorText: 'Member Number', relation: 'same-row', controlRole: 'textbox' }] } }, text: '10003' });

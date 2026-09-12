@@ -157,10 +157,20 @@ export const Detector = z.object({
 });
 export type Detector = z.infer<typeof Detector>;
 
+const CapabilityStatusEnum = z.enum(['draft', 'approved', 'deprecated']);
+
 // ---------- tenant overrides ----------
-/** Per-tenant specialisation of a base capability, without re-recording. */
+/**
+ * Per-tenant specialisation of a base capability, without re-recording. Stored and approved separately from
+ * the base artifact (capabilities/overrides/<capabilityId>.<tenantId>.json) so one tenant's change never
+ * re-versions an artifact other tenants already approved. Pinned to the base version it was reviewed against.
+ */
 export const TenantOverride = z.object({
+  capabilityId: z.string(),
+  /** Base capability version this override was written and reviewed against. Replay refuses a mismatch. */
+  baseVersion: z.string().regex(/^\d+\.\d+\.\d+$/),
   tenantId: z.string(),
+  status: CapabilityStatusEnum.default('draft'),
   description: z.string().optional(),
   entryUrl: z.string().optional(),
   /** Replace fields of an existing step by id (deep-merge one level). */
@@ -174,7 +184,7 @@ export const TenantOverride = z.object({
 export type TenantOverride = z.infer<typeof TenantOverride>;
 
 // ---------- the capability ----------
-export const CapabilityStatus = z.enum(['draft', 'approved', 'deprecated']);
+export const CapabilityStatus = CapabilityStatusEnum;
 
 export const Capability = z.object({
   schemaVersion: z.literal(SCHEMA_VERSION),
@@ -206,7 +216,6 @@ export const Capability = z.object({
   success: Checkpoint,
   /** Capability-specific detectors; merged with the app profile's. */
   detectors: z.array(Detector).default([]),
-  overrides: z.array(TenantOverride).default([]),
 
   policy: z.object({
     /** Highest risk class among the steps. */
@@ -229,4 +238,7 @@ export type Capability = z.infer<typeof Capability>;
 
 export function parseCapability(json: unknown): Capability {
   return Capability.parse(json);
+}
+export function parseOverride(json: unknown): TenantOverride {
+  return TenantOverride.parse(json);
 }

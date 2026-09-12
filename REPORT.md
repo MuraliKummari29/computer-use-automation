@@ -33,7 +33,8 @@ Key decisions:
 - **Replay was built and tested before discovery**, against a hand-authored artifact and every fault, because
   replay is the production path.
 - **Claude Opus 5** with adaptive thinking and the server-side refusal fallback. The real run
-  (`evidence/discovery-20260911T041205Z-7ff9/`) took 8 model turns and produced
+  (`evidence/discovery-20260912T205126Z-1f36/`) took 8 model turns (uncached input fell to 2 tokens per turn after the first, with prompt caching on the tool and
+system prefix and the latest turn) and produced
   `capabilities/coreserv.member.read_balances.json`, which replays unchanged on both tenants.
 
 ## 2. Artifact schema
@@ -83,12 +84,14 @@ the engine still runs detectors after such a step.
 | escalate | not safe to decide automatically | hand to a human (section 5) | unknown native dialog |
 | `failure` | stop with a debuggable error | `code`, `stepId`, `expected`, `observed`, screenshot, Playwright trace, jsonl log | `APP_ERROR` (title or HTTP 5xx), `LOCATOR_NOT_FOUND`, `CHECKPOINT_FAILED`, `POLICY_BLOCKED`, `INTERVENTION_ABORTED` |
 
-**Irreversible actions are never sent twice.** The engine records the moment an irreversible action is sent, before
-the response arrives. From then on: a failed checkpoint does not get the automatic re-act other steps get; a
-recovery that would replay from the top (session expiry) escalates with `IRREVERSIBLE_OUTCOME_UNKNOWN` instead,
-because "did the commit take?" is a question for a human with the app in front of them; and after a human-confirmed
-restart the step is skipped. The `slow_commit` fault (the write lands, the response takes 20 s) exercises this and
-the test asserts exactly one share exists afterwards. Three subtleties the tests caught: a recovery that fires during
+**Irreversible actions are never re-dispatched automatically.** The engine records the moment an irreversible
+action is sent, before the response arrives. Every subsequent entry into that step, whatever path led there (failed
+checkpoint, a recoverable detector firing afterwards, a throwing action, an operator retry, a session-expiry
+restart), goes through one gate: re-verify the checkpoint, let detectors classify the screen, and otherwise ask a
+human with `IRREVERSIBLE_OUTCOME_UNKNOWN`, where `skip` means "I verified it took effect", `retry` means "I verified
+it did not; send it once more", and `abort` stops. There is no other code path that dispatches a sent step. Two
+faults exercise it: `slow_commit` (the write lands, the response takes 20 s) and `notice_after_commit` (an
+interstitial appears after the write); both tests assert exactly one share exists afterwards. Three subtleties the tests caught: a recovery that fires during
 checkpoint verification must re-verify, not re-act (otherwise "acknowledge the notice" is followed by clicking a
 button that no longer exists); dialog events must not be consumed by checkpoint polling before detection sees them;
 and a run that ends mid-step must still report that step. Detectors can be excluded on tagged steps, so
@@ -114,15 +117,20 @@ class it belongs to. A first profile is seeded from the vendor's documented erro
 escalations; proposing the detector from an intervention record is a natural bounded LLM task, with a human
 approving it. Profiles are versioned with the vendor build so a tenant on an older build can pin an older profile.
 
-**Multi-tenant reuse** composes three layers at replay time: the **app profile** (per vendor product: detectors,
-dialog rules), the **capability** (recorded once), and a small **tenant override** (`patchSteps`, `insertSteps`,
-`removeSteps`, `extraDetectors`, `entryUrl`). The repository demonstrates it: the artifact recorded on "Harbor FCU"
-replays on "Summit Community Bank", which runs a newer console build, labels the field "Account #", and shows a
-compliance interstitial after sign-in. The override is one patched step; the interstitial needed nothing because
-the profile already knows it. **Drift detection** is the per-step `resolvedBy` signal aggregated per tenant and app
-version: a tenant that starts resolving through fallbacks needs an override or the base needs a new version. Next
-would be canary replays per tenant after vendor upgrades and promoting an override into the base when most tenants
-need it.
+**Multi-tenant reuse** composes three separately versioned layers at replay time: the **app profile** (per vendor
+product: detectors, dialog rules, the builds it was validated on), the **capability** (recorded once, approved
+once), and a small **tenant override** file (`capabilities/overrides/<capability>.<tenant>.json`: `patchSteps`,
+`insertSteps`, `removeSteps`, `extraDetectors`, `entryUrl`). An override is not part of the base artifact, so tenant
+212 changing a label does not re-version the artifact 211 other tenants approved; it carries its own `status` and
+the base `version` it was reviewed against, and replay refuses a mismatch. The repository demonstrates it: the
+artifact recorded on "Harbor FCU" replays on "Summit Community Bank", which runs a newer console build, labels the
+field "Account #", and shows a compliance interstitial after sign-in. The override is one patched step; the
+interstitial needed nothing because the profile already knows it. **Drift detection**: every run compares the
+vendor build on screen with the build the capability was recorded on and with the profile's known builds, and
+reports differences in `result.warnings` alongside per-step locator drift and ambiguity. Aggregated per tenant and
+build, that is the signal that a tenant needs an override, the base needs a new version, or the profile needs
+validating on a new build. Next would be canary replays per tenant after vendor upgrades and promoting an override
+into the base when most tenants need it.
 
 ## 5. Escalation & handoff
 
@@ -160,7 +168,12 @@ and the full record (resolution, operator, notes, human actions, token transitio
   on the artifact step at recording time, and the policy's name/URL matchers evaluated at run time. A vendor
   renaming "Confirm and Open" therefore cannot silently downgrade a step the reviewer marked irreversible, and a
   step mis-declared as read is still caught by the matcher. Irreversible actions are never executed during
-  discovery; they are recorded as approval-gated steps and the agent stops at the review screen. On replay the
+  discovery; they are recorded as approval-gated steps and the agent stops at the review screen. Because a real
+  core's "Post", "Save" or "Process" button is on no regex until someone writes it, **discovery is deny-by-default
+  for submits**: a button not on the policy's known-safe list is not clicked, and the agent is told to escalate so
+  a human performs it. The list grows per vendor from those escalations. Links and typing are not gated, which is a
+  judgment call: legacy consoles do post from links, and a stricter tenant can put discovery on a training
+  instance. On replay the
   invocation must carry an **approval record** (who approved, why; written to the result and evidence), not a
   boolean, or the step escalates; with no operator attached it fails closed. A calling agent can still populate
   that record, so the record is an audit trail, and the gate that stops an agent from self-approving belongs in
@@ -169,8 +182,8 @@ and the full record (resolution, operator, notes, human actions, token transitio
 - **Data.** Secrets are referenced by name, resolved at run time, and scrubbed from every log line, transcript and
   result. Sensitive params and outputs are masked to their last four characters in evidence. Policy regexes scrub
   SSN, card and phone patterns from free text. Transcripts store screenshots as file references.
-- **Drafts.** A capability with `status: draft` is refused by replay and by the catalog unless a reviewer
-  explicitly allows it; approval is the reviewer flipping the status after reading the artifact.
+- **Drafts.** A capability or tenant override with `status: draft` is refused by replay and by the catalog unless
+  a reviewer explicitly allows it; approval is the reviewer flipping the status after reading the artifact.
 - **Limits.** Screenshots are not redacted: they contain whatever was on screen (synthetic here; in production an
   access-controlled store with retention, never a repository). Detectors are substring matches over the visible text
   of all frames; a vendor page that legitimately contains "is required." in a help panel would trip the validation
