@@ -66,6 +66,8 @@ export interface Resolved {
   index: number;
   kind: LocatorStrategy['kind'];
   frame: string;
+  /** Number of candidates the strategy matched. >1 means the first was taken and the locator should be reviewed. */
+  matches: number;
   /** Text content of the resolved element (used by extract). */
   text: () => Promise<string>;
   bbox: () => Promise<{ x: number; y: number; w: number; h: number } | null>;

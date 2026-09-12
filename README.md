@@ -47,7 +47,7 @@ The mock console uses synthetic operator credentials (`operator` / `demo123`) th
 Everything except discovery works offline:
 
 ```bash
-npm test                 # ~5 min: 27 tests, headless Chromium against the mock app (ports 4310/4311)
+npm test                 # ~5 min: 31 tests, headless Chromium against the mock app (ports 4310/4311); also runs in CI
 npm run app              # start the target console at http://localhost:4310 (tenant "harbor")
 npm run app:summit       # a second tenant of the same product at http://localhost:4311
 ```

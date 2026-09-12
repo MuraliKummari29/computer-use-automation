@@ -41,7 +41,7 @@ export type DiscoveryResult =
   | { status: 'success'; capability: Capability; steps: number; summary: string; transcriptPath: string }
   | { status: 'failed'; reason: string; steps: number; transcriptPath: string };
 
-type ActInput = { action: 'click' | 'type' | 'select' | 'press' | 'navigate'; mark?: number; text?: string; param?: string; secret?: string; key?: string; url?: string; reason: string };
+type ActInput = { action: 'click' | 'type' | 'select' | 'press' | 'navigate'; mark?: number; text?: string; param?: string; secret?: string; key?: string; url?: string; reason: string; tags?: string[] };
 type ExtractInput = { output: string; value: string; type: 'string' | 'number' | 'currency' | 'boolean'; rowAnchor?: string; columnHeader?: string; label?: string; description?: string; sensitive?: boolean };
 type FinishInput = { summary: string; capabilityId: string; name: string; description: string; whenToUse: string; notFor?: string; params?: { name: string; description: string }[] };
 
@@ -137,7 +137,7 @@ export async function discover(o: DiscoveryOptions): Promise<DiscoveryResult> {
           runId: ev.runId,
           evidenceRef: ev.dir,
         });
-        ev.log('discovery.end', { status: 'success', steps, capabilityId: capability.id, summary: f.summary });
+        ev.log('discovery.end', { status: 'success', steps, capabilityId: capability.id, summary: f.summary, checkpointGaps: recorder.checkpointGaps });
         results.push({ type: 'tool_result', tool_use_id: use.id, content: 'Recorded.' });
         finished = { status: 'success', capability, steps, summary: f.summary, transcriptPath };
         continue;
@@ -265,11 +265,13 @@ export async function discover(o: DiscoveryOptions): Promise<DiscoveryResult> {
         last = await observe();
         steps++;
         const after = last;
-        if (a.action === 'navigate') recorder.recordNavigate(action.type === 'navigate' ? action.url : o.entryUrl, before, after, a.reason);
-        else if (a.action === 'click' && el && before) recorder.recordClick(el, before, after, a.reason, verdict.risk, true);
-        else if (a.action === 'type' && el) recorder.recordType(el, a.secret || a.param ? undefined : a.text, a.param, a.secret, a.reason);
-        else if (a.action === 'select' && el) recorder.recordSelect(el, a.param ? undefined : a.text, a.param, a.reason);
-        else if (a.action === 'press' && before) recorder.recordPress(a.key ?? 'Enter', el, before, after, a.reason);
+        const tags = Array.isArray(a.tags) ? a.tags.filter((t) => t === 'auth') : [];
+        if (a.action === 'navigate') recorder.recordNavigate(action.type === 'navigate' ? action.url : o.entryUrl, before, after, a.reason, tags);
+        else if (a.action === 'click' && el && before) recorder.recordClick(el, before, after, a.reason, verdict.risk, true, tags);
+        else if (a.action === 'type' && el) recorder.recordType(el, a.secret || a.param ? undefined : a.text, a.param, a.secret, a.reason, tags);
+        else if (a.action === 'select' && el) recorder.recordSelect(el, a.param ? undefined : a.text, a.param, a.reason, tags);
+        else if (a.action === 'press' && before) recorder.recordPress(a.key ?? 'Enter', el, before, after, a.reason, tags);
+        if (recorder.checkpointGaps.at(-1) && recorder.steps.at(-1)?.id === recorder.checkpointGaps.at(-1)) ev.warn('recorder.no_checkpoint', { stepId: recorder.steps.at(-1)?.id, note: 'no title/URL change after this action; reviewer must add an expect checkpoint' });
         ev.log('act', { step: steps, action: a.action, control: el?.name, mark: a.mark, risk: verdict.risk, reason: a.reason, title: after.title, url: after.url });
         results.push({ type: 'tool_result', tool_use_id: use.id, content: observationContent(after, ev) });
         continue;

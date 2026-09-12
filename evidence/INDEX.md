@@ -11,11 +11,11 @@ Each directory holds `run.jsonl` (structured, redacted log), `step-NN.png` scree
 
 | Scenario | Result | Evidence |
 |---|---|---|
-| replay: success (harbor) | `success` | [replay-20260911T041253Z-d96f](replay-20260911T041253Z-d96f/) |
-| replay: business outcome MEMBER_NOT_FOUND | `business_outcome` | [replay-20260911T041255Z-753b](replay-20260911T041255Z-753b/) |
-| replay: recoverable interstitial + session expiry | `success` | [replay-20260911T041256Z-a08a](replay-20260911T041256Z-a08a/) |
-| replay: second tenant via overrides (summit) | `success` | [replay-20260911T041300Z-efbb](replay-20260911T041300Z-efbb/) |
-| replay: validation rejected (business outcome) | `business_outcome` | [replay-20260911T041301Z-8005](replay-20260911T041301Z-8005/) |
-| replay: hard failure APP_ERROR with trace | `failure` | [replay-20260911T041306Z-71cf](replay-20260911T041306Z-71cf/) |
-| replay: permission denied (business outcome, block_card) | `business_outcome` | [replay-20260911T041312Z-f542](replay-20260911T041312Z-f542/) |
-| replay: irreversible step escalated to human, approved, completed | `success` | [replay-20260911T041314Z-6af2](replay-20260911T041314Z-6af2/) |
+| replay: success (harbor) | `success` | [replay-20260912T193200Z-406d](replay-20260912T193200Z-406d/) |
+| replay: business outcome MEMBER_NOT_FOUND | `business_outcome` | [replay-20260912T193201Z-b59a](replay-20260912T193201Z-b59a/) |
+| replay: recoverable interstitial + session expiry | `success` | [replay-20260912T193202Z-2dd9](replay-20260912T193202Z-2dd9/) |
+| replay: second tenant via overrides (summit) | `success` | [replay-20260912T193206Z-b1ab](replay-20260912T193206Z-b1ab/) |
+| replay: validation rejected (business outcome) | `business_outcome` | [replay-20260912T193207Z-5d03](replay-20260912T193207Z-5d03/) |
+| replay: hard failure APP_ERROR with trace | `failure` | [replay-20260912T193212Z-a679](replay-20260912T193212Z-a679/) |
+| replay: permission denied (business outcome, block_card) | `business_outcome` | [replay-20260912T193218Z-7358](replay-20260912T193218Z-7358/) |
+| replay: irreversible step escalated to human, approved, completed | `success` | [replay-20260912T193220Z-00c2](replay-20260912T193220Z-00c2/) |

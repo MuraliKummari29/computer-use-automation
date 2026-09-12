@@ -1,0 +1,84 @@
+{
+  "runId": "replay-20260912T193201Z-b59a",
+  "capabilityId": "coreserv.member.read_balances",
+  "capabilityVersion": "1.0.0",
+  "startedAt": "2026-09-12T19:32:01.697Z",
+  "finishedAt": "2026-09-12T19:32:02.883Z",
+  "durationMs": 1186,
+  "steps": [
+    {
+      "stepId": "open-1",
+      "action": "navigate",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 160,
+      "drift": false,
+      "recoveries": [],
+      "screenshot": "evidence/replay-20260912T193201Z-b59a/step-01.png"
+    },
+    {
+      "stepId": "type-2",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 212,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T193201Z-b59a/step-02.png"
+    },
+    {
+      "stepId": "type-3",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 178,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T193201Z-b59a/step-03.png"
+    },
+    {
+      "stepId": "click-4",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 185,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260912T193201Z-b59a/step-04.png"
+    },
+    {
+      "stepId": "type-5",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 160,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T193201Z-b59a/step-05.png"
+    }
+  ],
+  "interventions": [],
+  "evidenceDir": "evidence/replay-20260912T193201Z-b59a",
+  "status": "business_outcome",
+  "code": "MEMBER_NOT_FOUND",
+  "message": "No member found for Member Number ***9999.",
+  "outputs": {},
+  "detectorId": "member-not-found",
+  "stepId": "click-6"
+}

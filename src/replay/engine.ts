@@ -181,6 +181,10 @@ export class ReplayEngine {
       report.resolvedBy = { index: r.index, kind: r.kind };
       report.drift = r.index > 0;
       if (r.index > 0) ev.warn('locator.drift', { stepId: step.id, resolvedBy: r.kind, index: r.index, note: 'a lower-ranked strategy resolved the target; review the artifact' });
+      if (r.matches > 1) {
+        report.ambiguous = r.matches;
+        ev.warn('locator.ambiguous', { stepId: step.id, strategy: r.kind, matches: r.matches, note: 'first visible match used; tighten the locator (exact name, frame hint, or anchor)' });
+      }
       resolvedName = (await r.text().catch(() => ''))?.slice(0, 60);
     }
 
@@ -196,6 +200,10 @@ export class ReplayEngine {
       this.outputs[step.output] = value;
       report.resolvedBy = { index: r.index, kind: r.kind };
       report.drift = r.index > 0;
+      if (r.matches > 1) {
+        report.ambiguous = r.matches;
+        ev.warn('locator.ambiguous', { stepId: step.id, strategy: r.kind, matches: r.matches, output: step.output });
+      }
       ev.log('extract', { stepId: step.id, output: step.output, value });
       return 'ok';
     }

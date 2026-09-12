@@ -1,0 +1,140 @@
+{
+  "runId": "replay-20260912T193202Z-2dd9",
+  "capabilityId": "coreserv.member.read_balances",
+  "capabilityVersion": "1.0.0",
+  "startedAt": "2026-09-12T19:32:03.004Z",
+  "finishedAt": "2026-09-12T19:32:06.022Z",
+  "durationMs": 3018,
+  "steps": [
+    {
+      "stepId": "open-1",
+      "action": "navigate",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 170,
+      "drift": false,
+      "recoveries": [],
+      "screenshot": "evidence/replay-20260912T193202Z-2dd9/step-06.png"
+    },
+    {
+      "stepId": "type-2",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 165,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T193202Z-2dd9/step-07.png"
+    },
+    {
+      "stepId": "type-3",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 156,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T193202Z-2dd9/step-08.png"
+    },
+    {
+      "stepId": "click-4",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 184,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260912T193202Z-2dd9/step-09.png"
+    },
+    {
+      "stepId": "type-5",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 159,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T193202Z-2dd9/step-10.png"
+    },
+    {
+      "stepId": "click-6",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 177,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260912T193202Z-2dd9/step-11.png"
+    },
+    {
+      "stepId": "extract-7",
+      "action": "extract",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 18,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "labeled-value"
+      },
+      "screenshot": "evidence/replay-20260912T193202Z-2dd9/step-12.png"
+    },
+    {
+      "stepId": "extract-8",
+      "action": "extract",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 13,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "table-cell"
+      },
+      "screenshot": "evidence/replay-20260912T193202Z-2dd9/step-13.png"
+    },
+    {
+      "stepId": "extract-9",
+      "action": "extract",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 13,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "table-cell"
+      },
+      "screenshot": "evidence/replay-20260912T193202Z-2dd9/step-14.png"
+    }
+  ],
+  "interventions": [],
+  "evidenceDir": "evidence/replay-20260912T193202Z-2dd9",
+  "status": "success",
+  "outputs": {
+    "memberName": "******roix",
+    "savingsBalance": 75000,
+    "checkingBalance": 4310.9
+  }
+}

@@ -59,7 +59,9 @@ Key decisions:
   (model, run id, evidence ref, reviewer notes). The model transcript lives in evidence, never in the artifact.
 
 The recorder derives most of this mechanically: bundles from the surface, checkpoints from before/after
-observations, param canonicalisation, `auth` tagging. The model contributes the human-facing contract and the
+observations, param canonicalisation. The model tags sign-in steps (`tags: ["auth"]`, which covers MFA and
+challenge pages the heuristic could not see); if it does not, the recorder falls back to "everything up to the
+first click after the last secret was typed". The model also contributes the human-facing contract and the
 extraction locators, which are verified against the live page before they are accepted.
 
 ## 3. Determinism & error handling
@@ -67,8 +69,12 @@ extraction locators, which are verified against the live page before they are ac
 Replay never calls a model. Per step: peek and run detectors; resolve the target through the bundle, polling up to
 the step timeout; policy check; act; poll the checkpoint, running detectors on every poll so a "no member found"
 page is classified in a second rather than after the timeout. Waits are condition-based; the only fixed delays are
-the 250 ms polling intervals. The strategy that resolved each target is recorded; anything but the first is a
-**drift warning** on the step, not a failure.
+the 250 ms polling intervals. The strategy that resolved each target is recorded, along with how many visible
+controls it matched: anything but the first strategy is a **drift warning** on the step, and more than one match is
+an **ambiguity warning** (the first visible match is used, the locator should be tightened). Neither is a failure.
+Checkpoints are derived from title and URL changes; when an action changes neither, the recorder flags the step in
+the artifact's provenance notes as needing a hand-written checkpoint rather than silently leaving it unverified, and
+the engine still runs detectors after such a step.
 
 | Class | Meaning | Engine behaviour | Examples |
 |---|---|---|---|
@@ -93,6 +99,14 @@ is the implemented case. A desktop surface would implement the same interface ov
 Number'"), `table-cell` maps to table/row/cell roles, `bbox` is unchanged, `css` is unsupported. Where an app
 exposes nothing (Citrix, image-only), only `bbox` remains and the rationale says so, which is the honest signal
 that the capability is fragile.
+
+**Where app profiles come from.** In this repository the CoreServ profile was written by hand against a console I
+also wrote, which is the easy case. For a real vendor product the profile is a per-vendor onboarding artifact that
+grows from evidence: every unclassified stop produces an intervention record with the screen text, title, URL,
+status and screenshot, which is exactly the signature a new detector needs, and the operator's resolution says which
+class it belongs to. A first profile is seeded from the vendor's documented error pages, then extended from
+escalations; proposing the detector from an intervention record is a natural bounded LLM task, with a human
+approving it. Profiles are versioned with the vendor build so a tenant on an older build can pin an older profile.
 
 **Multi-tenant reuse** composes three layers at replay time: the **app profile** (per vendor product: detectors,
 dialog rules), the **capability** (recorded once), and a small **tenant override** (`patchSteps`, `insertSteps`,

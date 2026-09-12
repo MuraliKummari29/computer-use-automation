@@ -62,13 +62,13 @@ export class Recorder {
     return allOf.length ? { allOf, timeoutMs: 8000 } : undefined;
   }
 
-  recordNavigate(url: string, before: Observation | undefined, after: Observation, reason: string) {
+  recordNavigate(url: string, before: Observation | undefined, after: Observation, reason: string, tags: string[] = []) {
     const step: Step = {
       id: this.id('open'),
       action: 'navigate',
       url: url === this.ctx.entryUrl ? '{entryUrl}' : this.canonicalize(url),
       description: reason,
-      tags: [],
+      tags,
       risk: 'read',
       expect: after.title ? { allOf: [{ kind: 'title', contains: this.canonicalize(after.title) }], timeoutMs: 8000 } : undefined,
       timeoutMs: 8000,
@@ -78,22 +78,27 @@ export class Recorder {
     return step;
   }
 
-  recordClick(el: MarkedElement, before: Observation, after: Observation, reason: string, risk: RiskClass, executed: boolean) {
+  /** Steps whose post-condition could not be derived (no title/URL change). Surfaced for review. */
+  readonly checkpointGaps: string[] = [];
+
+  recordClick(el: MarkedElement, before: Observation, after: Observation, reason: string, risk: RiskClass, executed: boolean, tags: string[] = []) {
+    const expect = executed ? this.checkpointFrom(before, after) : undefined;
     const step: Step = {
       id: this.id('click'),
       action: 'click',
       target: el.locator,
       description: executed ? reason : `${reason} (irreversible: not executed during discovery; requires approval on replay)`,
-      tags: [],
+      tags,
       risk,
-      expect: executed ? this.checkpointFrom(before, after) : undefined,
+      expect,
       timeoutMs: 8000,
     };
+    if (executed && !expect) this.checkpointGaps.push(step.id);
     this.steps.push(step);
     return step;
   }
 
-  recordType(el: MarkedElement, literal: string | undefined, param: string | undefined, secret: string | undefined, reason: string) {
+  recordType(el: MarkedElement, literal: string | undefined, param: string | undefined, secret: string | undefined, reason: string, tags: string[] = []) {
     const step: Step = {
       id: this.id('type'),
       action: 'type',
@@ -101,7 +106,7 @@ export class Recorder {
       value: this.valueRef(literal, param, secret),
       clear: true,
       description: reason,
-      tags: [],
+      tags,
       risk: 'reversible',
       timeoutMs: 8000,
     };
@@ -109,14 +114,14 @@ export class Recorder {
     return step;
   }
 
-  recordSelect(el: MarkedElement, literal: string | undefined, param: string | undefined, reason: string) {
+  recordSelect(el: MarkedElement, literal: string | undefined, param: string | undefined, reason: string, tags: string[] = []) {
     const step: Step = {
       id: this.id('select'),
       action: 'select',
       target: el.locator,
       value: this.valueRef(literal, param, undefined),
       description: reason,
-      tags: [],
+      tags,
       risk: 'reversible',
       timeoutMs: 8000,
     };
@@ -124,18 +129,20 @@ export class Recorder {
     return step;
   }
 
-  recordPress(key: string, el: MarkedElement | undefined, before: Observation, after: Observation, reason: string) {
+  recordPress(key: string, el: MarkedElement | undefined, before: Observation, after: Observation, reason: string, tags: string[] = []) {
+    const expect = this.checkpointFrom(before, after);
     const step: Step = {
       id: this.id('press'),
       action: 'press',
       key,
       target: el?.locator,
       description: reason,
-      tags: [],
+      tags,
       risk: 'reversible',
-      expect: this.checkpointFrom(before, after),
+      expect,
       timeoutMs: 8000,
     };
+    if (!expect) this.checkpointGaps.push(step.id);
     this.steps.push(step);
     return step;
   }
@@ -158,8 +165,13 @@ export class Recorder {
     return step;
   }
 
-  /** Tag the sign-in sequence: everything up to and including the first click after the last secret was typed. */
+  /**
+   * Tag the sign-in sequence. The model may tag steps itself (tags: ["auth"], which also covers MFA or challenge
+   * pages); when it did not, fall back to the heuristic: everything up to and including the first click after the
+   * last secret was typed.
+   */
   tagAuthSteps() {
+    if (this.steps.some((s) => s.tags.includes('auth'))) return;
     const lastSecret = this.steps.map((s, i) => (s.action === 'type' && s.value.kind === 'secret' ? i : -1)).filter((i) => i >= 0).pop();
     if (lastSecret === undefined) return;
     let end = lastSecret;
@@ -222,7 +234,11 @@ export class Recorder {
         model: o.model,
         discoveryRunId: o.runId,
         evidenceRef: o.evidenceRef,
-        notes: 'Draft recorded by the discovery agent. Review locators and checkpoints, then set status to "approved" to allow unattended replay.',
+        notes:
+          'Draft recorded by the discovery agent. Review locators and checkpoints, then set status to "approved" to allow unattended replay.' +
+          (this.checkpointGaps.length
+            ? ` REVIEW NEEDED: no post-condition could be derived for step(s) ${this.checkpointGaps.join(', ')} (no title/URL change); add an "expect" checkpoint by hand.`
+            : ''),
       },
     };
   }

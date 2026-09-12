@@ -298,12 +298,14 @@ export class PlaywrightSurface implements Surface {
     for (let i = 0; i < locator.strategies.length; i++) {
       const s = locator.strategies[i];
       for (const frame of frames) {
-        const pw = await this.tryStrategy(frame, s).catch(() => null);
-        if (!pw) continue;
+        const hit = await this.tryStrategy(frame, s).catch(() => null);
+        if (!hit) continue;
+        const pw = hit.first;
         const r: ResolvedInternal = {
           index: i,
           kind: s.kind,
           frame: this.framePath(frame),
+          matches: hit.count,
           pw,
           text: async () => (await pw.innerText().catch(() => pw.textContent()))?.trim() ?? '',
           bbox: async () => {
@@ -317,7 +319,7 @@ export class PlaywrightSurface implements Surface {
     return null;
   }
 
-  private async tryStrategy(frame: Frame, s: LocatorStrategy): Promise<PwLocator | null> {
+  private async tryStrategy(frame: Frame, s: LocatorStrategy): Promise<{ first: PwLocator; count: number } | null> {
     let loc: PwLocator | null = null;
     switch (s.kind) {
       case 'role': {
@@ -337,7 +339,7 @@ export class PlaywrightSurface implements Surface {
       case 'labeled-value':
       case 'bbox': {
         const token = `t${++this.tokenSeq}`;
-        const strategy = s.kind === 'bbox' ? { ...s, frameOffset: await this.frameOffset(frame) } : s;
+        const strategy = s.kind === 'bbox' ? { ...s, frameOffset: await this.frameOffset(frame), currentViewport: this.viewport } : s;
         const ok = await evalIn(frame, resolveInPage, { token, strategy });
         if (!ok) return null;
         loc = frame.locator(`[data-cu-resolved="${token}"]`);
@@ -345,10 +347,19 @@ export class PlaywrightSurface implements Surface {
       }
     }
     if (!loc) return null;
-    const first = loc.first();
-    if ((await loc.count()) === 0) return null;
-    if (!(await first.isVisible().catch(() => false))) return null;
-    return first;
+    const count = await loc.count();
+    if (count === 0) return null;
+    // Prefer the first *visible* candidate; report how many matched so the engine can flag ambiguity.
+    let visible = 0;
+    let first: PwLocator | null = null;
+    for (let i = 0; i < count; i++) {
+      const c = loc.nth(i);
+      if (await c.isVisible().catch(() => false)) {
+        visible++;
+        first ??= c;
+      }
+    }
+    return first ? { first, count: visible } : null;
   }
 
   async peek(opts: { drainDialogs?: boolean } = {}) {

@@ -26,6 +26,8 @@ export const StepReport = z.object({
   resolvedBy: z.object({ index: z.number(), kind: z.string() }).optional(),
   /** True when a lower-ranked strategy had to be used: a UI drift signal, not a failure. */
   drift: z.boolean().default(false),
+  /** Set when the resolving strategy matched more than one visible control; the first was used. Review the locator. */
+  ambiguous: z.number().int().optional(),
   recoveries: z.array(z.object({ detectorId: z.string(), code: z.string(), action: z.string() })).default([]),
   screenshot: z.string().optional(),
   note: z.string().optional(),

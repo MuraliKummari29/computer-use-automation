@@ -8,6 +8,7 @@ You operate a legacy, server-rendered console the way a human operator would: yo
 How to work
 - Refer to controls by their mark number. Never guess coordinates.
 - One action per turn. After each action you receive a fresh screenshot and control list.
+- Tag every step that is part of signing in (entering credentials, MFA codes, challenge or consent pages, the sign-in click) with tags: ["auth"]. Replay re-runs exactly these steps if the session expires.
 - Values: when you must enter a value the caller supplies, use the "param" field with the parameter name rather than typing the literal. Credentials are secrets: use the "secret" field with the secret name; you never see or type the actual secret. The parameters and secrets available to you are listed in the task.
 - When the goal asks you to read something off the screen, call "extract" for each output with a robust on-screen locator: for a table, give the row anchor text and column header text; for a label/value pair, give the label text. Include the value you read so it can be verified against the live page.
 - Irreversible actions (final confirm/commit/submit of a change) are blocked during discovery by policy. They are recorded for approved replay. If the goal says to reach a confirmation/review screen, stop there and call "finish".
@@ -32,6 +33,7 @@ export function toolDefinitions(): Anthropic.Tool[] {
           key: { type: 'string', description: 'Key to press (e.g. Enter).' },
           url: { type: 'string', description: 'URL for navigate.' },
           reason: { type: 'string', description: 'One sentence: why this action, what you expect to happen.' },
+          tags: { type: 'array', items: { type: 'string', enum: ['auth'] }, description: 'Set ["auth"] on every sign-in related step (credentials, MFA, challenge pages, the sign-in click).' },
         },
         required: ['action', 'reason'],
       },

@@ -1,0 +1,20 @@
+{"at":"2026-09-12T19:32:01.697Z","runId":"replay-20260912T193201Z-b59a","level":"info","event":"replay.start","capabilityId":"coreserv.member.read_balances","version":"1.0.0","params":{"memberNumber":"***9999"},"steps":9}
+{"at":"2026-09-12T19:32:01.698Z","runId":"replay-20260912T193201Z-b59a","level":"info","event":"step.start","index":0,"stepId":"open-1","action":"navigate","description":"Load the application entry point to begin.","risk":"read"}
+{"at":"2026-09-12T19:32:01.849Z","runId":"replay-20260912T193201Z-b59a","level":"info","event":"act","stepId":"open-1","action":"navigate","risk":"read"}
+{"at":"2026-09-12T19:32:01.885Z","runId":"replay-20260912T193201Z-b59a","level":"info","event":"step.done","stepId":"open-1","status":"ok","attempts":1,"drift":false,"durationMs":160}
+{"at":"2026-09-12T19:32:01.885Z","runId":"replay-20260912T193201Z-b59a","level":"info","event":"step.start","index":1,"stepId":"type-2","action":"type","description":"Enter the operator ID to sign in.","risk":"reversible"}
+{"at":"2026-09-12T19:32:02.090Z","runId":"replay-20260912T193201Z-b59a","level":"info","event":"act","stepId":"type-2","action":"type","control":"Operator ID","risk":"reversible"}
+{"at":"2026-09-12T19:32:02.117Z","runId":"replay-20260912T193201Z-b59a","level":"info","event":"step.done","stepId":"type-2","status":"ok","attempts":1,"resolvedBy":{"index":0,"kind":"anchor"},"drift":false,"durationMs":212}
+{"at":"2026-09-12T19:32:02.117Z","runId":"replay-20260912T193201Z-b59a","level":"info","event":"step.start","index":2,"stepId":"type-3","action":"type","description":"Enter the [secret] password.","risk":"reversible"}
+{"at":"2026-09-12T19:32:02.288Z","runId":"replay-20260912T193201Z-b59a","level":"info","event":"act","stepId":"type-3","action":"type","control":"Password","risk":"reversible"}
+{"at":"2026-09-12T19:32:02.317Z","runId":"replay-20260912T193201Z-b59a","level":"info","event":"step.done","stepId":"type-3","status":"ok","attempts":1,"resolvedBy":{"index":0,"kind":"anchor"},"drift":false,"durationMs":178}
+{"at":"2026-09-12T19:32:02.317Z","runId":"replay-20260912T193201Z-b59a","level":"info","event":"step.start","index":3,"stepId":"click-4","action":"click","description":"Submit the sign-in form.","risk":"reversible"}
+{"at":"2026-09-12T19:32:02.494Z","runId":"replay-20260912T193201Z-b59a","level":"info","event":"act","stepId":"click-4","action":"click","control":"Sign In","risk":"reversible"}
+{"at":"2026-09-12T19:32:02.516Z","runId":"replay-20260912T193201Z-b59a","level":"info","event":"step.done","stepId":"click-4","status":"ok","attempts":1,"resolvedBy":{"index":0,"kind":"role"},"drift":false,"durationMs":185}
+{"at":"2026-09-12T19:32:02.516Z","runId":"replay-20260912T193201Z-b59a","level":"info","event":"step.start","index":4,"stepId":"type-5","action":"type","description":"Enter the caller-supplied member number to look up.","risk":"reversible"}
+{"at":"2026-09-12T19:32:02.667Z","runId":"replay-20260912T193201Z-b59a","level":"info","event":"act","stepId":"type-5","action":"type","control":"Member Number","risk":"reversible"}
+{"at":"2026-09-12T19:32:02.703Z","runId":"replay-20260912T193201Z-b59a","level":"info","event":"step.done","stepId":"type-5","status":"ok","attempts":1,"resolvedBy":{"index":0,"kind":"anchor"},"drift":false,"durationMs":160}
+{"at":"2026-09-12T19:32:02.703Z","runId":"replay-20260912T193201Z-b59a","level":"info","event":"step.start","index":5,"stepId":"click-6","action":"click","description":"Run the member search to open the member record.","risk":"reversible"}
+{"at":"2026-09-12T19:32:02.868Z","runId":"replay-20260912T193201Z-b59a","level":"info","event":"act","stepId":"click-6","action":"click","control":"Find","risk":"reversible"}
+{"at":"2026-09-12T19:32:02.883Z","runId":"replay-20260912T193201Z-b59a","level":"info","event":"detect","stepId":"click-6","detectorId":"member-not-found","type":"business_outcome","code":"MEMBER_NOT_FOUND","matched":"No member found for Member Number ***9999."}
+{"at":"2026-09-12T19:32:02.883Z","runId":"replay-20260912T193201Z-b59a","level":"info","event":"replay.end","status":"business_outcome","code":"MEMBER_NOT_FOUND","outputs":{}}

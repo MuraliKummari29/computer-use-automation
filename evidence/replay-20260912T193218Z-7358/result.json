@@ -1,0 +1,112 @@
+{
+  "runId": "replay-20260912T193218Z-7358",
+  "capabilityId": "coreserv.member.block_card",
+  "capabilityVersion": "1.0.0",
+  "startedAt": "2026-09-12T19:32:18.682Z",
+  "finishedAt": "2026-09-12T19:32:20.251Z",
+  "durationMs": 1569,
+  "steps": [
+    {
+      "stepId": "open",
+      "action": "navigate",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 174,
+      "drift": false,
+      "recoveries": [],
+      "screenshot": "evidence/replay-20260912T193218Z-7358/step-01.png"
+    },
+    {
+      "stepId": "user",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 177,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T193218Z-7358/step-02.png"
+    },
+    {
+      "stepId": "pass",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 184,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T193218Z-7358/step-03.png"
+    },
+    {
+      "stepId": "signin",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 185,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260912T193218Z-7358/step-04.png"
+    },
+    {
+      "stepId": "member-number",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 164,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T193218Z-7358/step-05.png"
+    },
+    {
+      "stepId": "find",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 179,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260912T193218Z-7358/step-06.png"
+    },
+    {
+      "stepId": "cards",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 171,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260912T193218Z-7358/step-07.png"
+    }
+  ],
+  "interventions": [],
+  "evidenceDir": "evidence/replay-20260912T193218Z-7358",
+  "status": "business_outcome",
+  "code": "PERMISSION_DENIED",
+  "message": "Not Authorized",
+  "outputs": {},
+  "detectorId": "not-authorized",
+  "stepId": "block"
+}

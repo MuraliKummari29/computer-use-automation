@@ -173,7 +173,7 @@ export function resolveInPage(arg: {
     | { kind: 'anchor'; anchorText: string; relation: 'same-row' | 'right-of' | 'below'; controlRole: string }
     | { kind: 'table-cell'; rowAnchor: string; columnHeader: string }
     | { kind: 'labeled-value'; label: string }
-    | { kind: 'bbox'; x: number; y: number; w: number; h: number; viewport: { w: number; h: number }; expectRole?: string; frameOffset: { x: number; y: number } };
+    | { kind: 'bbox'; x: number; y: number; w: number; h: number; viewport: { w: number; h: number }; expectRole?: string; frameOffset: { x: number; y: number }; currentViewport: { w: number; h: number } };
 }): boolean {
   const clean = (s: string | null | undefined) => (s ?? '').replace(/\s+/g, ' ').trim();
   document.querySelectorAll('[data-cu-resolved]').forEach((e) => e.removeAttribute('data-cu-resolved'));
@@ -276,8 +276,10 @@ export function resolveInPage(arg: {
   }
 
   if (s.kind === 'bbox') {
-    const sx = innerWidth / s.viewport.w;
-    const sy = innerHeight / s.viewport.h;
+    // Recorded boxes are in main-viewport coordinates; scale by the *main* viewport (not this frame's size),
+    // then translate into this frame's coordinate space.
+    const sx = s.currentViewport.w / s.viewport.w;
+    const sy = s.currentViewport.h / s.viewport.h;
     const cx = (s.x + s.w / 2) * sx - s.frameOffset.x;
     const cy = (s.y + s.h / 2) * sy - s.frameOffset.y;
     const el = document.elementFromPoint(cx, cy);
