@@ -20,7 +20,8 @@
     "^/admin",
     "^/export",
     "^/fault/",
-    "^/reset$"
+    "^/reset$",
+    "^/debug/"
   ],
   "allowedActions": [
     "navigate",

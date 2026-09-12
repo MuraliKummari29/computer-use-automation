@@ -17,12 +17,15 @@ export interface AppProfile {
   detectors: Detector[];
   /** Native dialogs that are known and safe to answer automatically. Anything else escalates. */
   dialogRules: DialogRule[];
+  /** Regex that captures the vendor build/version string from visible text (recorded in artifact provenance). */
+  versionPattern?: string;
 }
 
 export const coreservProfile: AppProfile = {
   id: 'coreserv',
   vendor: 'CoreServ back-office console (mock legacy core)',
   dialogRules: [],
+  versionPattern: 'CoreServ \\d+\\.\\d+\\.\\d+',
   detectors: [
     {
       id: 'session-expired',

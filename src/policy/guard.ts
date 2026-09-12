@@ -19,7 +19,10 @@ export interface GuardContext {
   approveIrreversible?: boolean;
   /** Discovery runs are never allowed to execute irreversible actions unless the policy says so. */
   mode: 'discovery' | 'replay';
+  /** Risk declared on the artifact step, if any. The effective risk is the higher of declared and matched. */
+  declaredRisk?: RiskClass;
 }
+const RISK_ORDER: Record<RiskClass, number> = { read: 0, reversible: 1, irreversible: 2 };
 
 export class PolicyGuard {
   constructor(readonly policy: Policy) {}
@@ -62,7 +65,8 @@ export class PolicyGuard {
     const u = this.urlAllowed(target);
     if (!u.ok) return { allowed: false, reason: u.reason, code: u.code };
     if (!this.policy.allowedActions.includes(action.type)) return { allowed: false, reason: `action ${action.type} not allowed`, code: 'ACTION_NOT_ALLOWED' };
-    const risk = this.classify(action, ctx);
+    const matched = this.classify(action, ctx);
+    const risk: RiskClass = ctx.declaredRisk && RISK_ORDER[ctx.declaredRisk] > RISK_ORDER[matched] ? ctx.declaredRisk : matched;
     if (risk === 'irreversible') {
       if (ctx.mode === 'discovery' && !this.policy.discovery.allowIrreversible)
         return { allowed: false, reason: `irreversible action "${ctx.controlName}" is not executed during discovery; it is recorded for approved replay`, code: 'IRREVERSIBLE_BLOCKED' };

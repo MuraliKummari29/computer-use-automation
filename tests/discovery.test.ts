@@ -134,7 +134,7 @@ describe('discovery loop (scripted model) -> artifact -> replay', () => {
     const mn = cap.steps.find((s) => s.description === 'enter the member number')!;
     expect(mn.action === 'type' && mn.target.strategies[0].kind).toBe('anchor');
     // Replays deterministically with a different member
-    const r = await runReplay({ capability: cap, params: { memberNumber: '10003' }, evidenceRoot: 'tests/.evidence', echo: false });
+    const r = await runReplay({ capability: cap, params: { memberNumber: '10003' }, evidenceRoot: 'tests/.evidence', echo: false, allowDraft: true });
     expect(r.status).toBe('success');
     if (r.status === 'success') expect(r.outputs).toEqual({ memberName: 'Chen Delacroix', savingsBalance: 75000 });
   });

@@ -56,9 +56,21 @@ process.env.CORESERV_PASSWORD ??= 'demo123';
 function usage() {
   console.log(`Usage:
   npm run discover -- --goal "<goal>" [--entry http://localhost:4310/] [--param k=v ...] [--sensitive k ...] [--out capabilities/<id>.json] [--headed] [--operator] [--tenant harbor]
-  npm run replay   -- --capability <file.json> [--param k=v ...] [--tenant summit] [--approve-irreversible] [--headed] [--operator] [--fault <name>]
-  npm run catalog  -- [--invoke <capabilityId> --param k=v ...]
+  npm run replay   -- --capability <file.json> [--param k=v ...] [--tenant summit] [--approved-by <who> --approval-reason "<why>"] [--allow-draft] [--headed] [--operator] [--fault <name>]
+  npm run catalog  -- [--invoke <capabilityId> --param k=v ... [--approved-by <who> --approval-reason "<why>"]]
   npm run schemas`);
+}
+
+/** Irreversible steps need a decision record, not a flag: who approved and why. */
+function approvalFromFlags(): { approvedBy: string; reason: string } | undefined {
+  const by = flag('approved-by');
+  const reason = flag('approval-reason');
+  if (!by && !reason) return undefined;
+  if (!by || !reason) {
+    console.error('Both --approved-by and --approval-reason are required to approve irreversible steps.');
+    process.exit(2);
+  }
+  return { approvedBy: by, reason };
 }
 
 async function withOperator<T>(enabled: boolean, headed: boolean, fn: (op?: OperatorConsole) => Promise<T>): Promise<T> {
@@ -137,7 +149,8 @@ async function main() {
           capability: capPath,
           params: params(),
           tenantId: flag('tenant'),
-          approveIrreversible: has('approve-irreversible'),
+          approval: approvalFromFlags(),
+          allowDraft: has('allow-draft'),
           headless: !headed,
           operator,
           fault: flag('fault'),
@@ -176,11 +189,7 @@ async function main() {
         console.error(`unknown capability ${invoke}; available: ${caps.map((c) => c.id).join(', ')}`);
         process.exit(2);
       }
-      if (cap.status !== 'approved' && !has('allow-draft')) {
-        console.error(`capability ${cap.id} is ${cap.status}; unattended invocation requires status=approved (pass --allow-draft to override)`);
-        process.exit(2);
-      }
-      const result = await runReplay({ capability: cap, params: params(), tenantId: flag('tenant'), approveIrreversible: has('approve-irreversible'), echo: false });
+      const result = await runReplay({ capability: cap, params: params(), tenantId: flag('tenant'), approval: approvalFromFlags(), allowDraft: has('allow-draft'), echo: false });
       console.log(JSON.stringify(result.status === 'success' ? { status: 'success', outputs: result.outputs } : result, null, 2));
       process.exitCode = result.status === 'failure' ? 1 : 0;
       return;

@@ -56,8 +56,18 @@ export const InterventionRecord = z.object({
 });
 export type InterventionRecord = z.infer<typeof InterventionRecord>;
 
+/** Who approved an irreversible action on this invocation, and why. Recorded, never a bare boolean. */
+export const ApprovalRecord = z.object({
+  approvedBy: z.string().min(1),
+  reason: z.string().min(1),
+  at: z.string(),
+});
+export type ApprovalRecord = z.infer<typeof ApprovalRecord>;
+
 const ResultBase = {
   runId: z.string(),
+  /** Present when the caller supplied an approval for irreversible steps. */
+  approval: ApprovalRecord.optional(),
   capabilityId: z.string(),
   capabilityVersion: z.string(),
   tenantId: z.string().optional(),
@@ -107,6 +117,8 @@ export const FailureCodes = {
   POLICY_BLOCKED: 'POLICY_BLOCKED',
   RECOVERY_EXHAUSTED: 'RECOVERY_EXHAUSTED',
   INTERVENTION_ABORTED: 'INTERVENTION_ABORTED',
+  IRREVERSIBLE_OUTCOME_UNKNOWN: 'IRREVERSIBLE_OUTCOME_UNKNOWN',
+  DRAFT_NOT_APPROVED: 'DRAFT_NOT_APPROVED',
   INTERVENTION_TIMEOUT: 'INTERVENTION_TIMEOUT',
   MISSING_PARAM: 'MISSING_PARAM',
   EXTRACT_FAILED: 'EXTRACT_FAILED',

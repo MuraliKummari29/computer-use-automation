@@ -10,6 +10,9 @@
  *
  * ScriptedOperator: for tests and unattended demos; resolves programmatically
  * and can drive the live surface to simulate the human's manual steps.
+ *
+ * The console has no authentication: it is a local stand-in. A real one sits
+ * behind the institution's SSO and records the operator identity from it.
  */
 import express from 'express';
 import { readFileSync } from 'node:fs';
@@ -48,11 +51,13 @@ export class OperatorConsole implements OperatorChannel {
     app.post('/resolve/:id', (req, res) => {
       const p = this.pending.get(String(req.params.id));
       if (p) {
-        const body = req.body as { resolution: string; operator?: string; notes?: string };
+        const body = req.body as { resolution?: string; operator?: string; notes?: string };
+        const offered = p.req.options as string[];
+        if (!body.resolution || !offered.includes(body.resolution)) return res.status(400).send(`resolution must be one of: ${offered.join(', ')}`);
         const r: InterventionResolution = {
           resolution: body.resolution as InterventionResolution['resolution'],
-          operator: body.operator || 'operator',
-          notes: body.notes || undefined,
+          operator: (body.operator || 'operator').slice(0, 64),
+          notes: body.notes ? body.notes.slice(0, 2000) : undefined,
         };
         this.pending.delete(p.req.id);
         this.history.unshift({ req: p.req, res: r });

@@ -75,9 +75,10 @@ export class PlaywrightSurface implements Surface {
     this.page = await this.context.newPage();
     this.page.on('dialog', async (d) => {
       if (this.recordingHuman) {
-        // A Playwright-driven session cannot show native dialogs to the human; accept and record on their behalf.
-        this.humanSink?.({ kind: 'note', detail: `native ${d.type()} "${d.message()}" accepted while human in control` });
-        await d.accept();
+        // A Playwright-driven session cannot show native dialogs to the human. The conservative choice is to
+        // dismiss (cancel) and record it; the operator sees the note and can hand back with "approve" to accept it.
+        this.humanSink?.({ kind: 'note', detail: `native ${d.type()} "${d.message()}" was dismissed while human in control (Playwright cannot display it); hand back with approve to accept it on retry` });
+        await d.dismiss();
         return;
       }
       const rule = this.dialogRules.find((r) => new RegExp(r.pattern, 'i').test(d.message()));

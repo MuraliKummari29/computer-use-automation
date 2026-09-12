@@ -1,0 +1,205 @@
+{
+  "steps": [
+    {
+      "stepId": "open",
+      "action": "navigate",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 162,
+      "drift": false,
+      "recoveries": [],
+      "screenshot": "evidence/replay-20260912T194519Z-bc76/step-01.png"
+    },
+    {
+      "stepId": "user",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 172,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T194519Z-bc76/step-02.png"
+    },
+    {
+      "stepId": "pass",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 172,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T194519Z-bc76/step-03.png"
+    },
+    {
+      "stepId": "signin",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 181,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260912T194519Z-bc76/step-04.png"
+    },
+    {
+      "stepId": "member-number",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 159,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T194519Z-bc76/step-05.png"
+    },
+    {
+      "stepId": "find",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 182,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260912T194519Z-bc76/step-06.png"
+    },
+    {
+      "stepId": "open-form",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 173,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260912T194519Z-bc76/step-07.png"
+    },
+    {
+      "stepId": "product",
+      "action": "select",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 3185,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T194519Z-bc76/step-08.png"
+    },
+    {
+      "stepId": "nickname",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 160,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T194519Z-bc76/step-09.png"
+    },
+    {
+      "stepId": "deposit",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 165,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T194519Z-bc76/step-10.png"
+    },
+    {
+      "stepId": "continue",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 179,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260912T194519Z-bc76/step-11.png"
+    },
+    {
+      "stepId": "commit",
+      "action": "click",
+      "status": "escalated",
+      "attempts": 1,
+      "durationMs": 0,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      }
+    }
+  ],
+  "runId": "replay-20260912T194519Z-bc76",
+  "approval": {
+    "approvedBy": "evidence-script",
+    "reason": "synthetic member; evidence generation",
+    "at": "2026-09-12T19:45:19.127Z"
+  },
+  "capabilityId": "coreserv.member.open_subaccount",
+  "capabilityVersion": "1.0.0",
+  "startedAt": "2026-09-12T19:45:19.127Z",
+  "finishedAt": "2026-09-12T19:45:32.625Z",
+  "durationMs": 13498,
+  "interventions": [
+    {
+      "id": "replay-20260912T194519Z-bc76-int1",
+      "requestedAt": "2026-09-12T19:45:32.540Z",
+      "stepId": "commit",
+      "reason": "checkpoint not met after step commit; the irreversible action was already sent, verify its outcome in the app before deciding",
+      "code": "IRREVERSIBLE_OUTCOME_UNKNOWN",
+      "screenshot": "evidence/replay-20260912T194519Z-bc76/intervention-1.png",
+      "humanActions": [],
+      "resolvedAt": "2026-09-12T19:45:32.544Z",
+      "resolution": "abort",
+      "operator": "reviewer",
+      "notes": "verified in app: share was created once (IRREVERSIBLE_OUTCOME_UNKNOWN)"
+    }
+  ],
+  "evidenceDir": "evidence/replay-20260912T194519Z-bc76",
+  "status": "failure",
+  "code": "INTERVENTION_ABORTED",
+  "message": "checkpoint not met after step commit",
+  "stepId": "commit",
+  "expected": "{\"kind\":\"title\",\"contains\":\"Sub-Account Opened\"}",
+  "observed": "title=\"Loading http://localhost:4310/app/member/***0042/subaccount/commit\" url=http://localhost:4310/app/member/***0042/subaccount/confirm",
+  "evidence": {
+    "screenshot": "evidence/replay-20260912T194519Z-bc76/failure.png",
+    "trace": "evidence/replay-20260912T194519Z-bc76/trace.zip",
+    "log": "evidence/replay-20260912T194519Z-bc76/run.jsonl"
+  }
+}

@@ -12,7 +12,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "evidence": "tsx scripts/make-evidence.ts",
-    "app:summit": "tsx mock-app/server.ts --tenant summit --port 4311"
+    "app:summit": "tsx mock-app/server.ts --tenant summit --port 4311",
+    "schemas": "tsx src/cli.ts schemas"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.125.0",

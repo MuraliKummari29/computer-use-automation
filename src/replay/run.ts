@@ -17,7 +17,8 @@ export interface RunReplayOptions {
   params: Record<string, string | number | boolean>;
   policy?: PolicyT | string;
   tenantId?: string;
-  approveIrreversible?: boolean;
+  approval?: { approvedBy: string; reason: string };
+  allowDraft?: boolean;
   headless?: boolean;
   operator?: OperatorChannel;
   evidenceRoot?: string;
@@ -53,7 +54,8 @@ export async function runReplay(o: RunReplayOptions): Promise<ReplayResult> {
       capability,
       params: o.params,
       tenantId: o.tenantId,
-      approveIrreversible: o.approveIrreversible,
+      approval: o.approval,
+      allowDraft: o.allowDraft,
       policy,
       surface,
       evidence,

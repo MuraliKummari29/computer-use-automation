@@ -83,6 +83,39 @@ describe('replay helpers', () => {
   });
 });
 
+describe('recorder canonicalisation', () => {
+  it('replaces whole param values only, never substrings of other words', async () => {
+    const { Recorder } = await import('../src/agent/recorder.js');
+    const r = new Recorder({ entryUrl: 'http://x/', params: { memberNumber: '10001', nickname: 'Sub' }, sensitiveParams: new Set(), secretNames: [] });
+    expect(r.canonicalize('Member Summary - 10001')).toBe('Member Summary - {memberNumber}');
+    expect(r.canonicalize('/app/member/10001/subaccount')).toBe('/app/member/{memberNumber}/subaccount');
+    expect(r.canonicalize('Sub-Account Opened')).toBe('Sub-Account Opened');
+    expect(r.canonicalize('Nickname: Sub')).toBe('Nickname: {nickname}');
+    expect(r.canonicalize('id 100011')).toBe('id 100011');
+  });
+  it('deep-merges tenant patches one level so a patched target keeps unpatched fields', async () => {
+    const { applyOverride } = await import('../src/replay/engine.js');
+    const cap = parseCapability(JSON.parse(readFileSync('tests/fixtures/read_balances.json', 'utf8')));
+    const base = cap.steps.find((s) => s.id === 'member-number')!;
+    const patched = applyOverride(cap.steps, { tenantId: 't', patchSteps: { 'member-number': { target: { frame: 'other' } } }, insertSteps: [], removeSteps: [], extraDetectors: [] }).find((s) => s.id === 'member-number')!;
+    if (patched.action !== 'type' || base.action !== 'type') throw new Error('unexpected step shape');
+    expect(patched.target.frame).toBe('other');
+    expect(patched.target.strategies).toEqual(base.target.strategies);
+  });
+});
+
+describe('policy guard: declared risk', () => {
+  it('uses the higher of the artifact-declared risk and the policy-matched risk', () => {
+    const guard = new PolicyGuard(policy);
+    const click = { type: 'click' as const, target: { mark: 1 } };
+    const url = 'http://localhost:4310/app/member/10001/cards';
+    // renamed control no longer matches the policy pattern, but the artifact says irreversible
+    expect(guard.check(click, { currentUrl: url, controlName: 'Apply Hold', mode: 'replay', declaredRisk: 'irreversible' })).toMatchObject({ allowed: false, code: 'IRREVERSIBLE_NEEDS_APPROVAL' });
+    // artifact says read, but the control name matches: policy wins upward
+    expect(guard.check(click, { currentUrl: url, controlName: 'Confirm Block', mode: 'replay', declaredRisk: 'read' })).toMatchObject({ allowed: false, code: 'IRREVERSIBLE_NEEDS_APPROVAL' });
+  });
+});
+
 describe('control token', () => {
   it('only allows the documented transitions', () => {
     const t = new ControlToken();

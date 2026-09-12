@@ -1,0 +1,147 @@
+{
+  "steps": [
+    {
+      "stepId": "open-1",
+      "action": "navigate",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 168,
+      "drift": false,
+      "recoveries": [],
+      "screenshot": "evidence/replay-20260912T194504Z-dab5/step-01.png"
+    },
+    {
+      "stepId": "type-2",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 168,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T194504Z-dab5/step-02.png"
+    },
+    {
+      "stepId": "type-3",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 175,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T194504Z-dab5/step-03.png"
+    },
+    {
+      "stepId": "click-4",
+      "action": "click",
+      "status": "recovered",
+      "attempts": 1,
+      "durationMs": 357,
+      "drift": false,
+      "recoveries": [
+        {
+          "detectorId": "compliance-reminder",
+          "code": "INTERSTITIAL_COMPLIANCE",
+          "action": "click"
+        }
+      ],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260912T194504Z-dab5/step-04.png"
+    },
+    {
+      "stepId": "type-5",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 161,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T194504Z-dab5/step-05.png"
+    },
+    {
+      "stepId": "click-6",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 180,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260912T194504Z-dab5/step-06.png"
+    },
+    {
+      "stepId": "extract-7",
+      "action": "extract",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 18,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "labeled-value"
+      },
+      "screenshot": "evidence/replay-20260912T194504Z-dab5/step-07.png"
+    },
+    {
+      "stepId": "extract-8",
+      "action": "extract",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 12,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "table-cell"
+      },
+      "screenshot": "evidence/replay-20260912T194504Z-dab5/step-08.png"
+    },
+    {
+      "stepId": "extract-9",
+      "action": "extract",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 13,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "table-cell"
+      },
+      "screenshot": "evidence/replay-20260912T194504Z-dab5/step-09.png"
+    }
+  ],
+  "runId": "replay-20260912T194504Z-dab5",
+  "capabilityId": "coreserv.member.read_balances",
+  "capabilityVersion": "1.0.0",
+  "tenantId": "summit",
+  "startedAt": "2026-09-12T19:45:04.933Z",
+  "finishedAt": "2026-09-12T19:45:06.416Z",
+  "durationMs": 1483,
+  "interventions": [],
+  "evidenceDir": "evidence/replay-20260912T194504Z-dab5",
+  "status": "success",
+  "outputs": {
+    "memberName": "******ield",
+    "savingsBalance": 640,
+    "checkingBalance": 88.13
+  }
+}

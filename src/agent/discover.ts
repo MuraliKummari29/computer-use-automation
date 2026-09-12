@@ -17,6 +17,7 @@ import { RunEvidence } from '../evidence/logger.js';
 import { Handoff, type OperatorChannel } from '../handoff/control.js';
 import { Recorder } from './recorder.js';
 import { SYSTEM_PROMPT, describeObservation, taskPrompt, toolDefinitions } from './prompts.js';
+import { APP_PROFILES } from '../apps/coreserv.js';
 
 export interface DiscoveryOptions {
   goal: string;
@@ -65,9 +66,10 @@ export async function discover(o: DiscoveryOptions): Promise<DiscoveryResult> {
   let last: Observation | undefined;
   let steps = 0;
   let versionObserved: string | undefined;
+  const versionRe = APP_PROFILES[o.profile ?? 'coreserv']?.versionPattern;
   const observe = async (): Promise<Observation> => {
     const obs = await o.surface.observe({ marks: true });
-    const m = obs.text.match(/CoreServ \d+\.\d+\.\d+/);
+    const m = versionRe ? obs.text.match(new RegExp(versionRe)) : null;
     if (m) versionObserved = m[0];
     return obs;
   };
@@ -83,12 +85,14 @@ export async function discover(o: DiscoveryOptions): Promise<DiscoveryResult> {
     if (steps >= maxSteps) return fail(`max steps (${maxSteps}) reached without finishing`);
     pruneImages(messages, 3);
 
+    // Prompt caching: tools + system are a stable prefix; the growing conversation is cached up to the latest
+    // user turn so each step only pays for the newest observation.
     const response = await client.beta.messages.create({
       model,
       max_tokens: 8000,
-      system: SYSTEM_PROMPT,
+      system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
       tools: toolDefinitions(),
-      messages,
+      messages: withCacheBreakpoint(messages),
       betas: ['server-side-fallback-2026-07-01'],
       fallbacks: 'default',
     });
@@ -296,6 +300,22 @@ function observationContent(obs: Observation, ev: RunEvidence, note?: string): A
     { type: 'image', source: { type: 'base64', media_type: 'image/png', data: obs.screenshotPng.toString('base64') } },
     { type: 'text', text: describeObservation(obs, note) + (path ? `\n[screenshot saved: ${path}]` : '') },
   ];
+}
+
+/** Mark the last user message as a cache breakpoint (a shallow copy; the stored history is untouched). */
+function withCacheBreakpoint(messages: Anthropic.MessageParam[]): Anthropic.MessageParam[] {
+  const out = messages.slice();
+  const i = out.length - 1;
+  const last = out[i];
+  if (last?.role !== 'user') return out;
+  if (typeof last.content === 'string') out[i] = { role: 'user', content: [{ type: 'text', text: last.content, cache_control: { type: 'ephemeral' } }] };
+  else {
+    const blocks = last.content.slice();
+    const j = blocks.length - 1;
+    blocks[j] = { ...blocks[j], cache_control: { type: 'ephemeral' } } as Anthropic.ContentBlockParam;
+    out[i] = { role: 'user', content: blocks };
+  }
+  return out;
 }
 
 /** Keep only the most recent N screenshots in the conversation to bound context growth. */

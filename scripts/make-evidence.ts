@@ -22,9 +22,21 @@ const runs: { label: string; run: () => Promise<{ status: string; evidenceDir: s
   { label: 'replay: business outcome MEMBER_NOT_FOUND', run: () => runReplay({ capability: READ, params: { memberNumber: '99999' }, echo: false }) },
   { label: 'replay: recoverable interstitial + session expiry', run: () => runReplay({ capability: READ, params: { memberNumber: '10003' }, fault: 'session_expired', echo: false }) },
   { label: 'replay: second tenant via overrides (summit)', run: () => runReplay({ capability: READ, params: { memberNumber: '10042' }, tenantId: 'summit', echo: false }) },
-  { label: 'replay: validation rejected (business outcome)', run: () => runReplay({ capability: OPEN, params: { memberNumber: '10001', product: 'CLUB', nickname: 'Evidence', initialDeposit: '5' }, approveIrreversible: true, echo: false }) },
-  { label: 'replay: hard failure APP_ERROR with trace', run: () => runReplay({ capability: OPEN, params: { memberNumber: '10001', product: 'CLUB', nickname: 'Evidence', initialDeposit: '50' }, approveIrreversible: true, fault: 'app_error', echo: false }) },
-  { label: 'replay: permission denied (business outcome, block_card)', run: () => runReplay({ capability: 'capabilities/coreserv.member.block_card.json', params: { memberNumber: '10001' }, approveIrreversible: true, fault: 'permission_denied', echo: false }) },
+  { label: 'replay: validation rejected (business outcome)', run: () => runReplay({ capability: OPEN, params: { memberNumber: '10001', product: 'CLUB', nickname: 'Evidence', initialDeposit: '5' }, approval: { approvedBy: 'evidence-script', reason: 'synthetic member; evidence generation' }, echo: false }) },
+  { label: 'replay: hard failure APP_ERROR with trace', run: () => runReplay({ capability: OPEN, params: { memberNumber: '10001', product: 'CLUB', nickname: 'Evidence', initialDeposit: '50' }, approval: { approvedBy: 'evidence-script', reason: 'synthetic member; evidence generation' }, fault: 'app_error', echo: false }) },
+  { label: 'replay: permission denied (business outcome, block_card)', run: () => runReplay({ capability: 'capabilities/coreserv.member.block_card.json', params: { memberNumber: '10001' }, approval: { approvedBy: 'evidence-script', reason: 'synthetic member; evidence generation' }, fault: 'permission_denied', echo: false }) },
+  {
+    label: 'replay: slow commit -> IRREVERSIBLE_OUTCOME_UNKNOWN escalated, never re-sent, operator aborts',
+    run: () =>
+      runReplay({
+        capability: OPEN,
+        params: { memberNumber: '10042', product: 'SAV2', nickname: 'Evidence', initialDeposit: '10' },
+        approval: { approvedBy: 'evidence-script', reason: 'synthetic member; evidence generation' },
+        operator: new ScriptedOperator((req) => ({ resolution: 'abort', operator: 'reviewer', notes: `verified in app: share was created once (${req.code})` })),
+        fault: 'slow_commit',
+        echo: false,
+      }),
+  },
   {
     label: 'replay: irreversible step escalated to human, approved, completed',
     run: () =>

@@ -10,7 +10,7 @@
  */
 import { join } from 'node:path';
 import type { Capability, Checkpoint, Classification, Condition, Detector, Step, TenantOverride, ValueRef } from '../schema/capability.js';
-import { FailureCodes, type InterventionRecord, type ReplayResult, type StepReport } from '../schema/result.js';
+import { FailureCodes, type ApprovalRecord, type InterventionRecord, type ReplayResult, type StepReport } from '../schema/result.js';
 import type { Policy } from '../schema/policy.js';
 import type { Surface, DialogEvent } from '../surface/types.js';
 import { PolicyGuard } from '../policy/guard.js';
@@ -23,8 +23,10 @@ export interface ReplayOptions {
   capability: Capability;
   params: Record<string, string | number | boolean>;
   tenantId?: string;
-  /** Caller's explicit approval for irreversible steps on this invocation. */
-  approveIrreversible?: boolean;
+  /** Caller's explicit approval for irreversible steps on this invocation: who and why, recorded in the result. */
+  approval?: { approvedBy: string; reason: string };
+  /** Drafts are not replayed unattended unless explicitly allowed (review workflow). */
+  allowDraft?: boolean;
   policy: Policy;
   surface: Surface;
   evidence: RunEvidence;
@@ -45,7 +47,10 @@ class OutcomeSignal extends Error {
   }
 }
 class RestartSignal extends Error {
-  constructor(readonly reason: string) {
+  constructor(
+    readonly reason: string,
+    readonly stepId?: string,
+  ) {
     super('restart');
   }
 }
@@ -60,6 +65,11 @@ export class ReplayEngine {
   private recoveryCounts = new Map<string, number>();
   private dialogRules: { pattern: string; response: 'accept' | 'dismiss' }[] = [];
   private escalationsPerStep = new Map<string, number>();
+  /** Irreversible steps whose action has been sent to the app, whether or not the outcome was verified. */
+  private executedIrreversible = new Set<string>();
+  private approval?: ApprovalRecord;
+  /** The step in flight, so a run that ends mid-step still reports it. */
+  private current?: StepReport;
   private restarts = 0;
   private startedAt = new Date();
   private steps: Step[] = [];
@@ -82,7 +92,8 @@ export class ReplayEngine {
   async run(): Promise<ReplayResult> {
     const { capability: cap, evidence, params } = this.o;
     this.startedAt = new Date();
-    evidence.log('replay.start', { capabilityId: cap.id, version: cap.version, tenantId: this.o.tenantId, params: this.maskedParams(), steps: this.steps.length });
+    if (this.o.approval) this.approval = { ...this.o.approval, at: new Date().toISOString() };
+    evidence.log('replay.start', { capabilityId: cap.id, version: cap.version, status: cap.status, tenantId: this.o.tenantId, params: this.maskedParams(), steps: this.steps.length, approval: this.approval });
 
     // Sensitive params are masked in everything that leaves the engine.
     for (const p of cap.params) {
@@ -93,6 +104,8 @@ export class ReplayEngine {
     this.o.surface.setDialogRules(this.profile.dialogRules);
 
     try {
+      if (cap.status !== 'approved' && !this.o.allowDraft)
+        throw new OutcomeSignal(this.failSync(FailureCodes.DRAFT_NOT_APPROVED, `capability ${cap.id}@${cap.version} is ${cap.status}; unattended replay requires status=approved (pass allowDraft to override during review)`));
       this.validateParams();
       await this.executeAll();
       await this.verifySuccess();
@@ -113,6 +126,19 @@ export class ReplayEngine {
       } catch (e) {
         if (!(e instanceof RestartSignal)) throw e;
         if (this.restarts++ >= 1) throw new OutcomeSignal(await this.fail(FailureCodes.RECOVERY_EXHAUSTED, `restart requested again after recovery (${e.reason})`, {}));
+        if (this.executedIrreversible.size) {
+          // An irreversible action has already been sent to the app. Replaying from the top is not safe to decide
+          // automatically (it may or may not have taken effect): a human must verify the app state first.
+          const ids = [...this.executedIrreversible].join(', ');
+          const step = this.steps.find((x) => x.id === e.stepId) ?? this.steps[0];
+          const report = this.reports.find((r) => r.stepId === step.id) ?? { stepId: step.id, action: step.action, status: 'escalated' as const, attempts: 0, durationMs: 0, drift: false, recoveries: [] };
+          const rec = await this.escalate(step, report, FailureCodes.IRREVERSIBLE_OUTCOME_UNKNOWN, `${e.reason} after irreversible step(s) ${ids} were executed; verify the outcome in the app before deciding`, {
+            options: ['retry', 'abort'],
+            observed: 'retry = state verified, replay from the top with the executed step(s) skipped; abort = stop',
+          });
+          if (rec.resolution !== 'retry')
+            throw new OutcomeSignal(await this.fail(rec.resolution === 'timeout' ? FailureCodes.INTERVENTION_TIMEOUT : FailureCodes.IRREVERSIBLE_OUTCOME_UNKNOWN, `${e.reason} after irreversible step(s) ${ids}`, { stepId: step.id }));
+        }
         this.o.evidence.warn('replay.restart', { reason: e.reason });
       }
     }
@@ -122,12 +148,13 @@ export class ReplayEngine {
     const ev = this.o.evidence;
     const t0 = Date.now();
     const report: StepReport = { stepId: step.id, action: step.action, status: 'ok', attempts: 0, durationMs: 0, drift: false, recoveries: [] };
-    // An irreversible step that already executed before a restart must not run twice.
-    if (this.restarts > 0 && step.risk === 'irreversible' && this.reports.some((r) => r.stepId === step.id && r.status === 'ok')) {
-      ev.warn('step.skip_after_restart', { stepId: step.id });
+    // An irreversible step whose action was already sent must not run twice after a restart.
+    if (this.restarts > 0 && this.executedIrreversible.has(step.id)) {
+      ev.warn('step.skip_after_restart', { stepId: step.id, note: 'irreversible action already sent before the restart; verified by the operator' });
       return;
     }
     ev.log('step.start', { index, stepId: step.id, action: step.action, description: step.description, risk: step.risk });
+    this.current = report;
 
     for (;;) {
       report.attempts++;
@@ -144,7 +171,13 @@ export class ReplayEngine {
 
       // 2. Perform the step.
       const outcome = await this.perform(step, report);
-      if (outcome === 'ok') break;
+      if (outcome === 'ok') {
+        if (report.status === 'escalated') {
+          report.status = 'ok';
+          report.note = 'completed after human intervention';
+        }
+        break;
+      }
       if (outcome === 'retry') continue;
       if (outcome === 'skip') {
         report.status = 'skipped';
@@ -154,6 +187,7 @@ export class ReplayEngine {
     report.durationMs = Date.now() - t0;
     report.screenshot = ev.screenshot(await this.o.surface.screenshot());
     this.reports = this.reports.filter((r) => r.stepId !== step.id).concat(report);
+    this.current = undefined;
     ev.log('step.done', { stepId: step.id, status: report.status, attempts: report.attempts, resolvedBy: report.resolvedBy, drift: report.drift, durationMs: report.durationMs });
   }
 
@@ -220,8 +254,9 @@ export class ReplayEngine {
     const verdict = this.guard.check(action, {
       currentUrl: (await surface.peek()).url,
       controlName,
-      approveIrreversible: this.o.approveIrreversible || this.approvedSteps.has(step.id),
+      approveIrreversible: !!this.approval || this.approvedSteps.has(step.id),
       mode: 'replay',
+      declaredRisk: step.risk,
     });
     if (!verdict.allowed) {
       ev.warn('policy.denied', { stepId: step.id, code: verdict.code, reason: verdict.reason });
@@ -240,7 +275,9 @@ export class ReplayEngine {
     }
     if (verdict.flagged) ev.warn('policy.flagged', { stepId: step.id, note: verdict.flagged });
 
-    // Act.
+    // Act. The control token is the authority on who may act on the session.
+    if (!this.handoff.token.automationMayAct) throw new Error(`engine attempted to act while control is "${this.handoff.token.current}"`);
+    if (verdict.risk === 'irreversible') this.executedIrreversible.add(step.id);
     try {
       await surface.act(action);
     } catch (e) {
@@ -364,16 +401,24 @@ export class ReplayEngine {
     ev.warn('recover', { stepId: step.id, detectorId: detector.id, code: c.code, action: c.recovery.action, attempt: n });
     const rec = c.recovery;
     if (rec.action === 'wait') await this.o.surface.act({ type: 'wait', ms: rec.ms });
-    if (rec.action === 'click') await this.o.surface.act({ type: 'click', target: { locator: rec.target } });
+    if (rec.action === 'click') await this.guardedAct({ type: 'click', target: { locator: rec.target } }, `recovery:${detector.id}`, nameOf(rec.target));
     if (rec.action === 'dialog') {
       /* dialog rules are applied by the surface before the next action */
     }
     if (rec.action === 'rerun-tagged') {
       // Re-establish state (e.g. re-authenticate) then replay from the top; completed irreversible steps are skipped.
       for (const s of this.steps.filter((x) => x.tags.includes(rec.tag))) await this.runRecoveryStep(s);
-      throw new RestartSignal(`${c.code}: re-ran steps tagged "${rec.tag}"`);
+      throw new RestartSignal(`${c.code}: re-ran steps tagged "${rec.tag}"`, step.id);
     }
     return 'retry';
+  }
+
+  /** Every action outside the main step path (recoveries, re-auth) still goes through the policy guard and the control token. */
+  private async guardedAct(action: ReturnType<ReplayEngine['toSurfaceAction']>, context: string, controlName?: string, declaredRisk?: Step['risk']) {
+    const verdict = this.guard.check(action, { currentUrl: (await this.o.surface.peek()).url, controlName, mode: 'replay', declaredRisk, approveIrreversible: false });
+    if (!verdict.allowed) throw new OutcomeSignal(await this.fail(FailureCodes.POLICY_BLOCKED, `${context}: ${verdict.reason}`, {}));
+    if (!this.handoff.token.automationMayAct) throw new Error(`engine attempted to act (${context}) while control is "${this.handoff.token.current}"`);
+    await this.o.surface.act(action);
   }
 
   /** Minimal step execution used inside a recovery (no detection recursion). */
@@ -384,7 +429,7 @@ export class ReplayEngine {
       const r = await this.resolveWithWait(step.target, step.timeoutMs);
       if (!r) throw new OutcomeSignal(await this.fail(FailureCodes.RECOVERY_EXHAUSTED, `recovery step ${step.id} could not resolve its target`, { stepId: step.id }));
     }
-    await this.o.surface.act(action);
+    await this.guardedAct(action, `rerun:${step.id}`, 'target' in step && step.target ? nameOf(step.target) : undefined, step.risk);
     this.o.evidence.log('recovery.step', { stepId: step.id, action: step.action });
     if (step.expect && !(await this.waitForCheckpoint(step.expect)))
       throw new OutcomeSignal(await this.fail(FailureCodes.RECOVERY_EXHAUSTED, `recovery step ${step.id} checkpoint failed`, { stepId: step.id }));
@@ -392,15 +437,19 @@ export class ReplayEngine {
 
   // ---------------- stuck -> human ----------------
   private async stuck(step: Step, report: StepReport, code: string, reason: string, detail: { expected?: string; observed?: string }): Promise<'ok' | 'retry' | 'skip'> {
-    if (report.attempts < 2 && code !== FailureCodes.EXTRACT_FAILED) {
+    const sent = this.executedIrreversible.has(step.id);
+    if (report.attempts < 2 && code !== FailureCodes.EXTRACT_FAILED && !sent) {
       this.o.evidence.warn('step.retry', { stepId: step.id, code, reason });
       await this.o.surface.act({ type: 'wait', ms: 500 });
       return 'retry';
     }
-    const rec = await this.escalate(step, report, code, reason, { ...detail, options: ['retry', 'skip', 'abort'] });
+    const rec = await this.escalate(step, report, sent ? FailureCodes.IRREVERSIBLE_OUTCOME_UNKNOWN : code, sent ? `${reason}; the irreversible action was already sent, verify its outcome in the app before deciding` : reason, {
+      ...detail,
+      options: ['retry', 'skip', 'abort'],
+    });
     if (rec.resolution === 'retry') return 'retry';
     if (rec.resolution === 'skip') return 'skip';
-    const finalCode = rec.resolution === 'timeout' ? code : rec.resolution === 'abort' && this.handoff.available ? FailureCodes.INTERVENTION_ABORTED : code;
+    const finalCode = rec.resolution === 'timeout' ? (sent ? FailureCodes.IRREVERSIBLE_OUTCOME_UNKNOWN : code) : rec.resolution === 'abort' && this.handoff.available ? FailureCodes.INTERVENTION_ABORTED : code;
     throw new OutcomeSignal(await this.fail(finalCode, reason, { stepId: step.id, ...detail }));
   }
 
@@ -548,15 +597,22 @@ export class ReplayEngine {
 
   private base() {
     const finishedAt = new Date();
+    // Include the in-flight step when the run ends inside it (business outcome, failure, abort).
+    let steps = this.reports;
+    if (this.current && !steps.some((r) => r.stepId === this.current!.stepId)) {
+      const c = this.current;
+      steps = [...steps, { ...c, status: c.status === 'ok' ? 'failed' : c.status }];
+    }
     return {
+      steps,
       runId: this.o.evidence.runId,
+      approval: this.approval,
       capabilityId: this.o.capability.id,
       capabilityVersion: this.o.capability.version,
       tenantId: this.o.tenantId,
       startedAt: this.startedAt.toISOString(),
       finishedAt: finishedAt.toISOString(),
       durationMs: finishedAt.getTime() - this.startedAt.getTime(),
-      steps: this.reports,
       interventions: this.interventions,
       evidenceDir: this.o.evidence.dir,
     };
@@ -599,7 +655,15 @@ export class ReplayEngine {
 // ---------------- pure helpers ----------------
 export function applyOverride(steps: Step[], override?: TenantOverride): Step[] {
   if (!override) return steps;
-  let out = steps.filter((s) => !override.removeSteps.includes(s.id)).map((s) => (override.patchSteps[s.id] ? ({ ...s, ...override.patchSteps[s.id] } as Step) : s));
+  const mergeOneLevel = (base: Step, patch: Record<string, unknown>): Step => {
+    const out: Record<string, unknown> = { ...base };
+    for (const [k, v] of Object.entries(patch)) {
+      const b = out[k];
+      out[k] = b && typeof b === 'object' && !Array.isArray(b) && v && typeof v === 'object' && !Array.isArray(v) ? { ...(b as object), ...(v as object) } : v;
+    }
+    return out as Step;
+  };
+  let out = steps.filter((s) => !override.removeSteps.includes(s.id)).map((s) => (override.patchSteps[s.id] ? mergeOneLevel(s, override.patchSteps[s.id]) : s));
   for (const ins of override.insertSteps) {
     const i = out.findIndex((s) => s.id === ins.after);
     out = i >= 0 ? [...out.slice(0, i + 1), ins.step, ...out.slice(i + 1)] : [...out, ins.step];

@@ -21,6 +21,7 @@ afterAll(async () => {
 });
 
 const opts = { evidenceRoot: EV, echo: false };
+const APPROVAL = { approvedBy: 'test-suite', reason: 'synthetic member' };
 
 describe('deterministic replay: read balances', () => {
   it('succeeds with typed outputs', async () => {
@@ -79,7 +80,7 @@ describe('deterministic replay: open sub-account (irreversible)', () => {
   const params = { memberNumber: '10001', product: 'CLUB', nickname: 'Vacation', initialDeposit: '50' };
 
   it('surfaces a validation rejection as a business outcome with the app message', async () => {
-    const r = await runReplay({ ...opts, capability: OPEN, params: { ...params, initialDeposit: '5' }, approveIrreversible: true });
+    const r = await runReplay({ ...opts, capability: OPEN, params: { ...params, initialDeposit: '5' }, approval: APPROVAL });
     expect(r.status).toBe('business_outcome');
     if (r.status === 'business_outcome') {
       expect(r.code).toBe('VALIDATION_REJECTED');
@@ -105,10 +106,37 @@ describe('deterministic replay: open sub-account (irreversible)', () => {
     }
     expect(op.requests[0].code).toBe('IRREVERSIBLE_NEEDS_APPROVAL');
     expect(r.interventions[0]).toMatchObject({ resolution: 'approve', operator: 'jane', stepId: 'commit' });
+    expect(r.steps.find((s) => s.stepId === 'commit')).toMatchObject({ status: 'ok', note: 'completed after human intervention' });
     expect(existsSync(`${r.evidenceDir}/intervention-1.json`)).toBe(true);
   });
+  it('never re-sends an irreversible action when its outcome is unknown (slow commit), and escalates instead', async () => {
+    const op = new ScriptedOperator((req) => ({ resolution: 'abort', operator: 'kim', notes: `saw ${req.code}` }));
+    const r = await runReplay({ ...opts, capability: OPEN, params: { ...params, memberNumber: '10042', nickname: 'Slow' }, approval: APPROVAL, operator: op, fault: 'slow_commit' });
+    expect(r.status).toBe('failure');
+    if (r.status === 'failure') expect(r.code).toBe('INTERVENTION_ABORTED');
+    expect(op.requests.map((q) => q.code)).toEqual(['IRREVERSIBLE_OUTCOME_UNKNOWN']);
+    // exactly one share was created despite the checkpoint timing out
+    const state = (await (await fetch('http://localhost:4310/debug/member/10042')).json()) as { shares: string[] };
+    expect(state.shares.filter((id) => id !== 'S01' && id !== 'S05')).toHaveLength(1);
+    expect(r.steps.find((s) => s.stepId === 'commit')!.attempts).toBe(1);
+  });
+  it('records the approval decision in the result', async () => {
+    const r = await runReplay({ ...opts, capability: OPEN, params: { ...params, memberNumber: '10003', nickname: 'Rec' }, approval: { approvedBy: 'jane', reason: 'member verified by phone' } });
+    expect(r.status).toBe('success');
+    expect(r.approval).toMatchObject({ approvedBy: 'jane', reason: 'member verified by phone' });
+    expect(r.approval!.at).toBeTruthy();
+  });
+  it('refuses to replay a draft unattended', async () => {
+    const { readFileSync } = await import('node:fs');
+    const draft = { ...JSON.parse(readFileSync(READ, 'utf8')), status: 'draft' };
+    const r = await runReplay({ ...opts, capability: draft, params: { memberNumber: '10001' } });
+    expect(r.status).toBe('failure');
+    if (r.status === 'failure') expect(r.code).toBe('DRAFT_NOT_APPROVED');
+    const ok = await runReplay({ ...opts, capability: draft, params: { memberNumber: '10001' }, allowDraft: true });
+    expect(ok.status).toBe('success');
+  });
   it('reports an application error as a hard failure with debuggable detail and evidence', async () => {
-    const r = await runReplay({ ...opts, capability: OPEN, params: { ...params, nickname: 'Err' }, approveIrreversible: true, fault: 'app_error' });
+    const r = await runReplay({ ...opts, capability: OPEN, params: { ...params, nickname: 'Err' }, approval: APPROVAL, fault: 'app_error' });
     expect(r.status).toBe('failure');
     if (r.status === 'failure') {
       expect(r.code).toBe('APP_ERROR');
@@ -132,18 +160,20 @@ describe('deterministic replay: open sub-account (irreversible)', () => {
     try {
       const op = new ScriptedOperator(async (req, s) => {
         if (req.code === 'UNEXPECTED_DIALOG' && s) {
-          // The human re-submits the form themselves, then hands back with "skip".
+          // The human tries the button themselves; the native dialog cannot be shown to them, so it is
+          // dismissed and recorded. They read the note and hand back with "approve" (accept it on retry).
           await s.act({ type: 'click', target: { locator: { strategies: [{ kind: 'role', role: 'button', name: 'Continue', exact: true }] } } });
-          return { resolution: 'skip', operator: 'lee', notes: 'clicked Continue manually' };
+          return { resolution: 'approve', operator: 'lee', notes: 'fee notice is expected for this product' };
         }
         return { resolution: 'approve', operator: 'lee' };
       }, surface);
       const r = await runReplay({ ...opts, capability: OPEN, params: { ...params, nickname: 'Human' }, operator: op, fault: 'confirm_dialog', surface });
       expect(r.status).toBe('success');
       const dialogIntervention = r.interventions.find((i) => i.code === 'UNEXPECTED_DIALOG')!;
-      expect(dialogIntervention.resolution).toBe('skip');
+      expect(dialogIntervention.resolution).toBe('approve');
       expect(dialogIntervention.humanActions.some((a) => a.kind === 'click' && a.detail.includes('Continue'))).toBe(true);
-      expect(r.steps.find((s) => s.stepId === 'continue')!.status).toBe('skipped');
+      expect(dialogIntervention.humanActions.some((a) => a.kind === 'note' && a.detail.includes('dismissed while human in control'))).toBe(true);
+      expect(r.steps.find((s) => s.stepId === 'continue')).toMatchObject({ status: 'ok', note: 'completed after human intervention' });
     } finally {
       await surface.close();
     }
@@ -153,7 +183,7 @@ describe('deterministic replay: open sub-account (irreversible)', () => {
 describe('deterministic replay: block card (permission-gated)', () => {
   const BLOCK = 'tests/fixtures/block_card.json';
   it('treats a permission denial as a business outcome, not a failure', async () => {
-    const r = await runReplay({ ...opts, capability: BLOCK, params: { memberNumber: '10001' }, approveIrreversible: true, fault: 'permission_denied' });
+    const r = await runReplay({ ...opts, capability: BLOCK, params: { memberNumber: '10001' }, approval: APPROVAL, fault: 'permission_denied' });
     expect(r.status).toBe('business_outcome');
     if (r.status === 'business_outcome') {
       expect(r.code).toBe('PERMISSION_DENIED');
@@ -162,7 +192,7 @@ describe('deterministic replay: block card (permission-gated)', () => {
     }
   });
   it('places the block when approved and returns the confirmation line', async () => {
-    const r = await runReplay({ ...opts, capability: BLOCK, params: { memberNumber: '10042' }, approveIrreversible: true });
+    const r = await runReplay({ ...opts, capability: BLOCK, params: { memberNumber: '10042' }, approval: APPROVAL });
     expect(r.status).toBe('success');
     if (r.status === 'success') expect(String(r.outputs.confirmationMessage)).toContain('Temporary block placed on card ending 0042');
   });

@@ -1,0 +1,173 @@
+{
+  "steps": [
+    {
+      "stepId": "open",
+      "action": "navigate",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 164,
+      "drift": false,
+      "recoveries": [],
+      "screenshot": "evidence/replay-20260912T194506Z-6b34/step-01.png"
+    },
+    {
+      "stepId": "user",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 173,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T194506Z-6b34/step-02.png"
+    },
+    {
+      "stepId": "pass",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 176,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T194506Z-6b34/step-03.png"
+    },
+    {
+      "stepId": "signin",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 184,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260912T194506Z-6b34/step-04.png"
+    },
+    {
+      "stepId": "member-number",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 160,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T194506Z-6b34/step-05.png"
+    },
+    {
+      "stepId": "find",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 178,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260912T194506Z-6b34/step-06.png"
+    },
+    {
+      "stepId": "open-form",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 173,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260912T194506Z-6b34/step-07.png"
+    },
+    {
+      "stepId": "product",
+      "action": "select",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 3198,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T194506Z-6b34/step-08.png"
+    },
+    {
+      "stepId": "nickname",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 161,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T194506Z-6b34/step-09.png"
+    },
+    {
+      "stepId": "deposit",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 162,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T194506Z-6b34/step-10.png"
+    },
+    {
+      "stepId": "continue",
+      "action": "click",
+      "status": "failed",
+      "attempts": 1,
+      "durationMs": 0,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "note": "VALIDATION_REJECTED: Initial deposit must be at least $25.00 for Holiday Club."
+    }
+  ],
+  "runId": "replay-20260912T194506Z-6b34",
+  "approval": {
+    "approvedBy": "evidence-script",
+    "reason": "synthetic member; evidence generation",
+    "at": "2026-09-12T19:45:06.536Z"
+  },
+  "capabilityId": "coreserv.member.open_subaccount",
+  "capabilityVersion": "1.0.0",
+  "startedAt": "2026-09-12T19:45:06.536Z",
+  "finishedAt": "2026-09-12T19:45:11.678Z",
+  "durationMs": 5142,
+  "interventions": [],
+  "evidenceDir": "evidence/replay-20260912T194506Z-6b34",
+  "status": "business_outcome",
+  "code": "VALIDATION_REJECTED",
+  "message": "Initial deposit must be at least $25.00 for Holiday Club.",
+  "outputs": {},
+  "detectorId": "validation-rejected",
+  "stepId": "continue"
+}

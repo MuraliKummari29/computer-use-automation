@@ -31,11 +31,18 @@ export class Recorder {
     return `${prefix}-${++this.seq}`;
   }
 
-  /** Replace concrete param values with {param} placeholders (longest values first to avoid partial hits). */
+  /**
+   * Replace concrete param values with {param} placeholders. Longest values first, and only where the value
+   * stands alone (not inside a longer word or hyphenated token), so a nickname "Sub" never rewrites "Sub-Account".
+   */
   canonicalize(s: string): string {
     let out = s;
     const entries = Object.entries(this.ctx.params).sort((a, b) => b[1].length - a[1].length);
-    for (const [k, v] of entries) if (v.length >= 3) out = out.split(v).join(`{${k}}`);
+    for (const [k, v] of entries) {
+      if (v.length < 3) continue;
+      const re = new RegExp(`(?<![A-Za-z0-9_-])${v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z0-9_-])`, 'g');
+      out = out.replace(re, `{${k}}`);
+    }
     return out;
   }
 

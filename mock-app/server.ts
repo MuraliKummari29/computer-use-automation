@@ -16,6 +16,7 @@
  *   session_expired    one-shot: session dropped on next member summary load
  *   confirm_dialog     one-shot native confirm() on the sub-account form submit
  *   app_error          one-shot HTTP 500 on sub-account commit
+ *   slow_commit        one-shot: sub-account commit takes effect immediately but responds after 20s (longer than settle + checkpoint)
  *   permission_denied  persistent: card block is refused
  *
  * State is in memory; POST /reset restores the seed data (used by tests and the evidence script).
@@ -25,6 +26,9 @@
 import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { randomBytes } from 'node:crypto';
+import { statSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { TENANTS } from './tenants.js';
 import { MEMBERS, OPERATORS, SUB_ACCOUNT_PRODUCTS, resetMembers } from './data.js';
 import * as V from './views.js';
@@ -95,7 +99,14 @@ export function createApp(opts: MockAppOptions = {}) {
   app.get('/', (_req, res) => res.send(V.frameset(tenant)));
   app.get('/frame/top', (req, res) => res.send(V.topFrame(tenant, sessionOf(req)?.user)));
   app.get('/frame/nav', (req, res) => res.send(V.navFrame(tenant, !!sessionOf(req))));
-  app.get('/health', (_req, res) => res.json({ ok: true, tenant: tenant.id }));
+  const startedAt = Date.now();
+  app.get('/health', (_req, res) => res.json({ ok: true, tenant: tenant.id, startedAt }));
+  /** Test hook: read a member's state directly (denied to the agent by policy). */
+  app.get('/debug/member/:n', (req, res) => {
+    const mem = MEMBERS[param(req, 'n')];
+    if (!mem) return res.status(404).json({ error: 'not found' });
+    res.json({ shares: mem.shares.map((x) => x.id), cards: mem.cards.map((c) => ({ id: c.id, status: c.status })) });
+  });
   /** Test hook: restore the seed data (state is in memory and mutated by writes). */
   app.post('/reset', (_req, res) => {
     resetMembers();
@@ -183,13 +194,14 @@ export function createApp(opts: MockAppOptions = {}) {
     if (!mem || !pending) return res.redirect(`/app/member/${param(req, 'n')}/subaccount`);
     res.send(V.subAccountConfirm(tenant, mem, pending));
   });
-  app.post('/app/member/:n/subaccount/commit', requireSession, (req, res) => {
+  app.post('/app/member/:n/subaccount/commit', requireSession, async (req, res) => {
     const mem = MEMBERS[param(req, 'n')];
     const pending = sess(req).pendingSubAccount;
     if (!mem || !pending) return res.redirect(`/app/member/${param(req, 'n')}/subaccount`);
     if (consumeFault(req, res, 'app_error')) {
       return res.status(500).send(V.appErrorPage(tenant, 'ERR-' + randomBytes(3).toString('hex').toUpperCase()));
     }
+    const slowCommit = consumeFault(req, res, 'slow_commit');
     const nextNum = mem.shares.length + 10;
     const shareId = `S${String(nextNum).padStart(2, '0')}`;
     const checking = mem.shares.find((s) => s.id === 'S05')!;
@@ -204,6 +216,8 @@ export function createApp(opts: MockAppOptions = {}) {
     });
     sess(req).pendingSubAccount = undefined;
     const confirmation = 'CF' + Date.now().toString(36).toUpperCase();
+    // The write has already happened above; a slow response is the dangerous case for a replayer.
+    if (slowCommit) await new Promise((r) => setTimeout(r, 20000));
     res.send(V.subAccountDone(tenant, mem, shareId, confirmation));
   });
 
@@ -250,10 +264,15 @@ export function startMockApp(opts: MockAppOptions = {}) {
 /** Reuse a console already listening on the port (e.g. `npm run app` in another terminal), otherwise start one. */
 export async function ensureMockApp(opts: MockAppOptions & { port: number }) {
   const url = `http://localhost:${opts.port}`;
-  const up = await fetch(`${url}/health`).then((r) => r.ok).catch(() => false);
-  if (up) {
+  const health = await fetch(`${url}/health`).then((r) => (r.ok ? (r.json() as Promise<{ startedAt?: number }>) : null)).catch(() => null);
+  if (health) {
+    // A console started before the mock app's source last changed would silently run stale code.
+    const here = dirname(fileURLToPath(import.meta.url));
+    const newest = Math.max(...['server.ts', 'views.ts', 'data.ts', 'tenants.ts'].map((f) => statSync(join(here, f)).mtimeMs));
+    if (!health.startedAt || health.startedAt < newest)
+      throw new Error(`a console is already listening on ${url} but was started before mock-app/ last changed; restart it (npm run app) so tests and evidence run against current code`);
     const reset = await fetch(`${url}/reset`, { method: 'POST' }).then((r) => r.ok).catch(() => false);
-    if (!reset) throw new Error(`a console is already listening on ${url} but does not support POST /reset; restart it (npm run app) so its state can be reset`);
+    if (!reset) throw new Error(`a console is already listening on ${url} but does not support POST /reset; restart it (npm run app)`);
     return { url, close: async () => {}, reused: true };
   }
   return { ...(await startMockApp({ ...opts, quiet: opts.quiet ?? true })), reused: false };

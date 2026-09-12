@@ -83,9 +83,15 @@ the engine still runs detectors after such a step.
 | escalate | not safe to decide automatically | hand to a human (section 5) | unknown native dialog |
 | `failure` | stop with a debuggable error | `code`, `stepId`, `expected`, `observed`, screenshot, Playwright trace, jsonl log | `APP_ERROR` (title or HTTP 5xx), `LOCATOR_NOT_FOUND`, `CHECKPOINT_FAILED`, `POLICY_BLOCKED`, `INTERVENTION_ABORTED` |
 
-Two subtleties the tests caught: a recovery that fires during checkpoint verification must re-verify, not re-act
-(otherwise "acknowledge the notice" is followed by clicking a button that no longer exists); and dialog events must
-not be consumed by checkpoint polling before detection sees them. Detectors can be excluded on tagged steps, so
+**Irreversible actions are never sent twice.** The engine records the moment an irreversible action is sent, before
+the response arrives. From then on: a failed checkpoint does not get the automatic re-act other steps get; a
+recovery that would replay from the top (session expiry) escalates with `IRREVERSIBLE_OUTCOME_UNKNOWN` instead,
+because "did the commit take?" is a question for a human with the app in front of them; and after a human-confirmed
+restart the step is skipped. The `slow_commit` fault (the write lands, the response takes 20 s) exercises this and
+the test asserts exactly one share exists afterwards. Three subtleties the tests caught: a recovery that fires during
+checkpoint verification must re-verify, not re-act (otherwise "acknowledge the notice" is followed by clicking a
+button that no longer exists); dialog events must not be consumed by checkpoint polling before detection sees them;
+and a run that ends mid-step must still report that step. Detectors can be excluded on tagged steps, so
 "you are on the sign-in page" is not an error while signing in. UI drift, secondary here, is handled by bundle order
 plus the drift flag, and the observed app version is recorded so a replay on a new build can be re-validated.
 
@@ -126,14 +132,17 @@ calling its `escalate` tool. Escalations are capped at three per step.
 
 **Control transfer.** A `ControlToken` (`src/handoff/control.ts`) is the single source of truth for who holds the
 live session, with only these transitions, each logged with actor and time:
-`automation → intervention_requested → human → resuming → automation`. The engine does not act outside
-`automation`. The request carries capability, goal, step, why it stopped, expected vs observed, URL, a screenshot,
+`automation → intervention_requested → human → resuming → automation`. The engine checks the token immediately
+before every surface action, including recovery clicks and re-authentication, and throws if it is not
+`automation`; the invariant is enforced, not just implied by the awaiting call. The request carries capability, goal, step, why it stopped, expected vs observed, URL, a screenshot,
 and the resolutions on offer.
 
 **Taking the live session.** The browser is the same Playwright context the automation is using; run headed, the
 human acts in that window. While the token is `human`, a recorder in every frame streams clicks, changes and key
-presses (passwords masked) into the intervention record; native dialogs raised during human control are accepted
-on their behalf and recorded, since a Playwright-driven session cannot display them. The operator surface at
+presses (passwords masked) into the intervention record. Native dialogs raised during human control cannot be shown
+by a Playwright-driven session; they are dismissed (the conservative choice), recorded as a note the operator sees,
+and the operator can hand back with `approve` to accept that dialog on the retry. A CDP-level co-browsing view
+would remove this limitation. The operator surface at
 `localhost:4400` is a bare HTML page (request, screenshot, "Take control", notes, hand-back buttons). It is a
 stand-in; the seam is real, and a `ScriptedOperator` implements the same `OperatorChannel` in tests.
 
@@ -147,18 +156,27 @@ and the full record (resolution, operator, notes, human actions, token transitio
 
 - **Allowlist** (`policies/coreserv.json`): origins, path regexes, denied paths, permitted action types, enforced
   by `PolicyGuard.check` before every action in discovery and replay.
-- **Risk classes.** `read | reversible | irreversible`, from the action and the control's accessible name or URL
-  matched against policy patterns. Irreversible actions are never executed during discovery; they are recorded as
-  approval-gated steps and the agent stops at the review screen. On replay the invocation must carry
-  `approveIrreversible` (an explicit decision by the calling system) or the step escalates; with no operator
-  attached it fails closed. `block` and `flag` modes exist for stricter or looser tenants.
+- **Risk classes.** `read | reversible | irreversible`. Two sources feed it and the higher wins: the risk declared
+  on the artifact step at recording time, and the policy's name/URL matchers evaluated at run time. A vendor
+  renaming "Confirm and Open" therefore cannot silently downgrade a step the reviewer marked irreversible, and a
+  step mis-declared as read is still caught by the matcher. Irreversible actions are never executed during
+  discovery; they are recorded as approval-gated steps and the agent stops at the review screen. On replay the
+  invocation must carry an **approval record** (who approved, why; written to the result and evidence), not a
+  boolean, or the step escalates; with no operator attached it fails closed. A calling agent can still populate
+  that record, so the record is an audit trail, and the gate that stops an agent from self-approving belongs in
+  the caller's policy (the catalog layer would require a human identity in `approvedBy`). `block` and `flag` modes
+  exist for stricter or looser tenants. Recovery and re-authentication actions pass through the same guard.
 - **Data.** Secrets are referenced by name, resolved at run time, and scrubbed from every log line, transcript and
   result. Sensitive params and outputs are masked to their last four characters in evidence. Policy regexes scrub
   SSN, card and phone patterns from free text. Transcripts store screenshots as file references.
-- **Limits.** Screenshots contain whatever was on screen (synthetic here; in production an access-controlled
-  store with retention). Name-based risk classification depends on the policy author naming the right controls; a
-  renamed control would silently downgrade to `reversible`, which is why drift signals and `approved` gating
-  matter. The redactor is pattern-based and will miss unstructured PII.
+- **Drafts.** A capability with `status: draft` is refused by replay and by the catalog unless a reviewer
+  explicitly allows it; approval is the reviewer flipping the status after reading the artifact.
+- **Limits.** Screenshots are not redacted: they contain whatever was on screen (synthetic here; in production an
+  access-controlled store with retention, never a repository). Detectors are substring matches over the visible text
+  of all frames; a vendor page that legitimately contains "is required." in a help panel would trip the validation
+  detector, so profile signatures should prefer titles and scoped text as they mature. The redactor is
+  pattern-based and will miss unstructured PII. The operator console has no authentication; a real one sits behind
+  the institution's SSO and takes the operator identity from it.
 
 ## 7. Cuts
 
@@ -167,7 +185,8 @@ designed, nothing implemented); tenant registry and drift dashboard (overrides a
 mock tenants); confidence scoring (`drift`/`resolvedBy` are recorded per step, not aggregated); bounded LLM
 recovery on replay failure; code generation; multi-run stability. The two write-flow capabilities were completed by
 hand from what discovery can record, because policy forbids discovery from executing their commit step; that is the
-intended review workflow, not a shortcut.
+intended review workflow, not a shortcut. Exceptions (`OutcomeSignal`, `RestartSignal`) end a run from deep inside
+the step loop; a result type threaded through every call would be purer and was not worth the noise at this size.
 
 Next, in order: a review CLI that diffs artifact versions and flips `status`; per-tenant canary replays after
 vendor upgrades feeding a drift dashboard; bounded assisted recovery for a single failed step under the same policy

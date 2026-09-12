@@ -1,0 +1,140 @@
+{
+  "steps": [
+    {
+      "stepId": "open-1",
+      "action": "navigate",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 225,
+      "drift": false,
+      "recoveries": [],
+      "screenshot": "evidence/replay-20260912T194457Z-ff34/step-01.png"
+    },
+    {
+      "stepId": "type-2",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 197,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T194457Z-ff34/step-02.png"
+    },
+    {
+      "stepId": "type-3",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 184,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T194457Z-ff34/step-03.png"
+    },
+    {
+      "stepId": "click-4",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 211,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260912T194457Z-ff34/step-04.png"
+    },
+    {
+      "stepId": "type-5",
+      "action": "type",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 161,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "anchor"
+      },
+      "screenshot": "evidence/replay-20260912T194457Z-ff34/step-05.png"
+    },
+    {
+      "stepId": "click-6",
+      "action": "click",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 177,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "role"
+      },
+      "screenshot": "evidence/replay-20260912T194457Z-ff34/step-06.png"
+    },
+    {
+      "stepId": "extract-7",
+      "action": "extract",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 17,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "labeled-value"
+      },
+      "screenshot": "evidence/replay-20260912T194457Z-ff34/step-07.png"
+    },
+    {
+      "stepId": "extract-8",
+      "action": "extract",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 13,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "table-cell"
+      },
+      "screenshot": "evidence/replay-20260912T194457Z-ff34/step-08.png"
+    },
+    {
+      "stepId": "extract-9",
+      "action": "extract",
+      "status": "ok",
+      "attempts": 1,
+      "durationMs": 12,
+      "drift": false,
+      "recoveries": [],
+      "resolvedBy": {
+        "index": 0,
+        "kind": "table-cell"
+      },
+      "screenshot": "evidence/replay-20260912T194457Z-ff34/step-09.png"
+    }
+  ],
+  "runId": "replay-20260912T194457Z-ff34",
+  "capabilityId": "coreserv.member.read_balances",
+  "capabilityVersion": "1.0.0",
+  "startedAt": "2026-09-12T19:44:58.377Z",
+  "finishedAt": "2026-09-12T19:44:59.792Z",
+  "durationMs": 1415,
+  "interventions": [],
+  "evidenceDir": "evidence/replay-20260912T194457Z-ff34",
+  "status": "success",
+  "outputs": {
+    "memberName": "******view",
+    "savingsBalance": 2540.12,
+    "checkingBalance": 1203.55
+  }
+}
