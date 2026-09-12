@@ -123,12 +123,29 @@
         "allowIrreversible": {
           "default": false,
           "type": "boolean"
+        },
+        "knownSafeControls": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "unknownSubmit": {
+          "default": "block",
+          "type": "string",
+          "enum": [
+            "block",
+            "allow"
+          ]
         }
       },
       "required": [
         "maxSteps",
         "maxDurationMs",
-        "allowIrreversible"
+        "allowIrreversible",
+        "knownSafeControls",
+        "unknownSubmit"
       ],
       "additionalProperties": false
     },

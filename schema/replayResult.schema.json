@@ -7,6 +7,28 @@
         "runId": {
           "type": "string"
         },
+        "approval": {
+          "type": "object",
+          "properties": {
+            "approvedBy": {
+              "type": "string",
+              "minLength": 1
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            },
+            "at": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "approvedBy",
+            "reason",
+            "at"
+          ],
+          "additionalProperties": false
+        },
         "capabilityId": {
           "type": "string"
         },
@@ -74,6 +96,11 @@
                 "default": false,
                 "type": "boolean"
               },
+              "ambiguous": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
               "recoveries": {
                 "default": [],
                 "type": "array",
@@ -115,6 +142,13 @@
               "recoveries"
             ],
             "additionalProperties": false
+          }
+        },
+        "warnings": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         },
         "interventions": {
@@ -238,6 +272,7 @@
         "finishedAt",
         "durationMs",
         "steps",
+        "warnings",
         "interventions",
         "evidenceDir",
         "status",
@@ -250,6 +285,28 @@
       "properties": {
         "runId": {
           "type": "string"
+        },
+        "approval": {
+          "type": "object",
+          "properties": {
+            "approvedBy": {
+              "type": "string",
+              "minLength": 1
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            },
+            "at": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "approvedBy",
+            "reason",
+            "at"
+          ],
+          "additionalProperties": false
         },
         "capabilityId": {
           "type": "string"
@@ -318,6 +375,11 @@
                 "default": false,
                 "type": "boolean"
               },
+              "ambiguous": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
               "recoveries": {
                 "default": [],
                 "type": "array",
@@ -359,6 +421,13 @@
               "recoveries"
             ],
             "additionalProperties": false
+          }
+        },
+        "warnings": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         },
         "interventions": {
@@ -495,6 +564,7 @@
         "finishedAt",
         "durationMs",
         "steps",
+        "warnings",
         "interventions",
         "evidenceDir",
         "status",
@@ -511,6 +581,28 @@
       "properties": {
         "runId": {
           "type": "string"
+        },
+        "approval": {
+          "type": "object",
+          "properties": {
+            "approvedBy": {
+              "type": "string",
+              "minLength": 1
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            },
+            "at": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "approvedBy",
+            "reason",
+            "at"
+          ],
+          "additionalProperties": false
         },
         "capabilityId": {
           "type": "string"
@@ -579,6 +671,11 @@
                 "default": false,
                 "type": "boolean"
               },
+              "ambiguous": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
               "recoveries": {
                 "default": [],
                 "type": "array",
@@ -620,6 +717,13 @@
               "recoveries"
             ],
             "additionalProperties": false
+          }
+        },
+        "warnings": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         },
         "interventions": {
@@ -757,6 +861,7 @@
         "finishedAt",
         "durationMs",
         "steps",
+        "warnings",
         "interventions",
         "evidenceDir",
         "status",
